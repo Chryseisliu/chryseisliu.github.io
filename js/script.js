@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             collectionItem.innerHTML = `
                 <div class="collection-preview">
-                    <img src="images/${collectionKey}/${coverImage}" alt="${collection.title}" class="collection-image">
+                    <img src="images/${encodeURIComponent(collectionKey)}/${encodeURIComponent(coverImage)}" alt="${collection.title}" class="collection-image">
                     <div class="collection-overlay">
                         <h3 class="collection-title">${collection.title}</h3>
                         <p class="collection-count">${photoCount} photo${photoCount !== 1 ? 's' : ''}</p>
