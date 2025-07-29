@@ -565,9 +565,11 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
-        background-attachment: scroll;
-        background-size: cover;
+        background-attachment: fixed;
+        background-size: contain;
         background-position: center center;
+        background-repeat: no-repeat;
+        background-color: #1a1a1a;
     }
     
     .nav {
@@ -724,9 +726,11 @@ body {
 
 @media (max-width: 480px) {
     body {
-        background-attachment: scroll;
-        background-size: cover;
+        background-attachment: fixed;
+        background-size: contain;
         background-position: center center;
+        background-repeat: no-repeat;
+        background-color: #1a1a1a;
     }
     
     .nav {
