@@ -17,7 +17,7 @@ body {
     font-family: "Times New Roman", Times, serif;
     line-height: 1.6;
     color: #f5f5f5;
-    background: url('images/IMG_1303.jpeg') center/cover no-repeat fixed;
+    background: url('images/IMG_1303.jpeg') center/cover no-repeat;
     min-height: 100vh;
     position: relative;
 }
