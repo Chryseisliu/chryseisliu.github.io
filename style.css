@@ -228,6 +228,14 @@ body {
     text-align: center;
     color: #c0c0c0;
     font-size: 1.1rem;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.photography-instructions {
+    text-align: center;
+    color: #a0a0a0;
+    font-size: 0.9rem;
     margin-bottom: 50px;
     font-style: italic;
 }
@@ -565,11 +573,10 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
-        background-attachment: fixed;
-        background-size: contain;
+        background-attachment: scroll;
+        background-size: cover;
         background-position: center center;
         background-repeat: no-repeat;
-        background-color: #1a1a1a;
     }
     
     .nav {
@@ -726,11 +733,10 @@ body {
 
 @media (max-width: 480px) {
     body {
-        background-attachment: fixed;
-        background-size: contain;
+        background-attachment: scroll;
+        background-size: cover;
         background-position: center center;
         background-repeat: no-repeat;
-        background-color: #1a1a1a;
     }
     
     .nav {
@@ -809,6 +815,11 @@ body {
     
     .photography-intro {
         font-size: 1rem;
+        margin-bottom: 10px;
+    }
+    
+    .photography-instructions {
+        font-size: 0.8rem;
         margin-bottom: 30px;
     }
     
