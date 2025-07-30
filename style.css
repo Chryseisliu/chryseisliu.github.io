@@ -589,13 +589,6 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    body {
-        background-attachment: scroll;
-        background-size: auto 100%;
-        background-position: center top;
-        background-repeat: no-repeat;
-    }
-    
     .nav {
         top: 10px;
         right: 10px;
@@ -749,13 +742,6 @@ body {
 }
 
 @media (max-width: 480px) {
-    body {
-        background-attachment: scroll;
-        background-size: auto 100%;
-        background-position: center top;
-        background-repeat: no-repeat;
-    }
-    
     .nav {
         gap: 10px;
         padding: 6px 12px;
