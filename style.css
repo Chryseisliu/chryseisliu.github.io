@@ -40,26 +40,16 @@ body {
     opacity: 1;
 }
 
-/* Hint Text Container */
-.hint-container {
+/* Hint Text at top */
+.hint-text {
     position: fixed;
-    bottom: 40px;
+    top: 40px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10;
-    display: flex;
-    gap: 30px;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    transition: transform 0.3s ease;
-}
-
-/* Hint Text */
-.hint-text {
     color: #0066ff;
     font-size: 28px;
     font-weight: 600;
+    z-index: 10;
     pointer-events: none;
     animation: pulse 1.5s ease-in-out infinite;
     text-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
@@ -68,11 +58,11 @@ body {
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
-        transform: scale(1);
+        transform: translateX(-50%) scale(1);
     }
     50% {
         opacity: 0.8;
-        transform: scale(1.1);
+        transform: translateX(-50%) scale(1.1);
     }
 }
 
@@ -80,10 +70,13 @@ body {
     display: none;
 }
 
-/* What is this link */
+/* What is this link at bottom */
 .what-is-this {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
-    transition: opacity 0.3s ease;
     pointer-events: auto;
 }
 
@@ -760,13 +753,13 @@ body {
         font-size: 12px;
     }
     
-    .hint-container {
-        bottom: 20px;
-        gap: 20px;
+    .hint-text {
+        top: 20px;
+        font-size: 20px;
     }
     
-    .hint-text {
-        font-size: 20px;
+    .what-is-this {
+        bottom: 20px;
     }
     
     .what-is-this a {

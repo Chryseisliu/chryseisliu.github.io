@@ -8,6 +8,8 @@
     const ctx = canvas.getContext('2d');
     let isActive = false;
     let animationFrameId = null;
+    let clickCount = 0;
+    const MAX_CLICKS_FOR_HINT = 10;
 
     // Set canvas size
     function resizeCanvas() {
@@ -145,6 +147,8 @@
 
     // Activate automata
     function activateAutomata(event) {
+        clickCount++;
+        
         if (!isActive) {
             isActive = true;
             canvas.classList.add('active');
@@ -174,6 +178,9 @@
             const y = event.clientY - rect.top;
             seedAtPoint(x, y);
         }
+        
+        // Update hints visibility after each click
+        updateHintsVisibility();
     }
 
     // Listen for clicks anywhere on the page
@@ -200,8 +207,12 @@
         const isInHomeSection = rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
         
         if (isInHomeSection) {
-            // Show "click around" always on home section
-            hintText.classList.remove('hidden');
+            // Show "click around" only if click count is less than MAX_CLICKS_FOR_HINT
+            if (clickCount < MAX_CLICKS_FOR_HINT) {
+                hintText.classList.remove('hidden');
+            } else {
+                hintText.classList.add('hidden');
+            }
             // Show "what is this?" only if automata is active
             if (whatIsThis && isActive) {
                 whatIsThis.classList.remove('hidden');
