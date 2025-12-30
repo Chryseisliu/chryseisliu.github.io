@@ -40,48 +40,67 @@ body {
     opacity: 1;
 }
 
-/* Hint Text */
-.hint-text {
+/* Hint Text Container */
+.hint-container {
     position: fixed;
     bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
-    color: #0066ff;
-    font-size: 18px;
     z-index: 10;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: transform 0.3s ease;
+}
+
+/* Hint Text */
+.hint-text {
+    color: #0066ff;
+    font-size: 28px;
+    font-weight: 600;
+    pointer-events: none;
+    animation: pulse 1.5s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
 }
 
 .hint-text.hidden {
-    opacity: 0;
+    display: none;
 }
 
 /* What is this link */
 .what-is-this {
-    position: fixed;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 10;
     transition: opacity 0.3s ease;
+    pointer-events: auto;
 }
 
 .what-is-this.hidden {
-    opacity: 0;
-    pointer-events: none;
+    display: none;
 }
 
 .what-is-this a {
     color: #0066ff;
-    text-decoration: none;
-    font-size: 16px;
+    text-decoration: underline;
+    font-size: 20px;
+    font-weight: 500;
     transition: opacity 0.3s ease;
 }
 
 .what-is-this a:hover {
     opacity: 0.7;
-    text-decoration: underline;
 }
 
 /* Contact Sidebar */
@@ -741,17 +760,17 @@ body {
         font-size: 12px;
     }
     
-    .hint-text {
+    .hint-container {
         bottom: 20px;
-        font-size: 16px;
+        gap: 20px;
     }
     
-    .what-is-this {
-        bottom: 45px;
+    .hint-text {
+        font-size: 20px;
     }
     
     .what-is-this a {
-        font-size: 14px;
+        font-size: 18px;
     }
     
     .blog-section,

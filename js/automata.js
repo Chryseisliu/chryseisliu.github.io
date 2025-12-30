@@ -148,10 +148,6 @@
         if (!isActive) {
             isActive = true;
             canvas.classList.add('active');
-            hintText.classList.add('hidden');
-            if (whatIsThis) {
-                whatIsThis.classList.remove('hidden');
-            }
             initGrid();
             
             // Seed at click position
@@ -170,6 +166,7 @@
             drawGrid();
             lastTime = performance.now();
             animate(lastTime);
+            updateHintsVisibility(); // Update hints visibility after activation
         } else {
             // If already active, add more patterns on click
             const rect = canvas.getBoundingClientRect();
@@ -192,13 +189,8 @@
         }
     });
 
-    // Hide "what is this?" when scrolling away from home section
-    function updateWhatIsThisVisibility() {
-        if (!whatIsThis || !isActive) {
-            if (whatIsThis) whatIsThis.classList.add('hidden');
-            return;
-        }
-        
+    // Hide hints when scrolling away from home section
+    function updateHintsVisibility() {
         const homeSection = document.getElementById('home');
         if (!homeSection) return;
         
@@ -208,14 +200,23 @@
         const isInHomeSection = rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
         
         if (isInHomeSection) {
-            whatIsThis.classList.remove('hidden');
+            // Show "click around" always on home section
+            hintText.classList.remove('hidden');
+            // Show "what is this?" only if automata is active
+            if (whatIsThis && isActive) {
+                whatIsThis.classList.remove('hidden');
+            }
         } else {
-            whatIsThis.classList.add('hidden');
+            // Hide both when not in home section
+            hintText.classList.add('hidden');
+            if (whatIsThis) {
+                whatIsThis.classList.add('hidden');
+            }
         }
     }
 
-    window.addEventListener('scroll', updateWhatIsThisVisibility);
+    window.addEventListener('scroll', updateHintsVisibility);
     
     // Also check on initial load
-    setTimeout(updateWhatIsThisVisibility, 100);
+    setTimeout(updateHintsVisibility, 100);
 })();
