@@ -43,7 +43,7 @@ body {
 /* Hint Text at top */
 .hint-text {
     position: fixed;
-    top: 100px;
+    top: 200px;
     left: 0;
     right: 0;
     text-align: center;
