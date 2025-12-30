@@ -191,6 +191,7 @@ body {
     color: #000;
     margin-bottom: 60px;
     text-transform: lowercase;
+    text-align: center;
 }
 
 .blog-list {

@@ -92,7 +92,7 @@
     // Draw grid
     function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
         
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < cols; j++) {
@@ -105,7 +105,7 @@
 
     // Animation loop
     let lastTime = 0;
-    const fps = 10; // Frames per second
+    const fps = 10;
     const frameInterval = 1000 / fps;
 
     function animate(currentTime) {
@@ -191,4 +191,31 @@
             seedAtPoint(x, y);
         }
     });
+
+    // Hide "what is this?" when scrolling away from home section
+    function updateWhatIsThisVisibility() {
+        if (!whatIsThis || !isActive) {
+            if (whatIsThis) whatIsThis.classList.add('hidden');
+            return;
+        }
+        
+        const homeSection = document.getElementById('home');
+        if (!homeSection) return;
+        
+        const rect = homeSection.getBoundingClientRect();
+        // Show only if we're primarily in the home section (middle of viewport is within home section)
+        const viewportMiddle = window.innerHeight / 2;
+        const isInHomeSection = rect.top <= viewportMiddle && rect.bottom >= viewportMiddle;
+        
+        if (isInHomeSection) {
+            whatIsThis.classList.remove('hidden');
+        } else {
+            whatIsThis.classList.add('hidden');
+        }
+    }
+
+    window.addEventListener('scroll', updateWhatIsThisVisibility);
+    
+    // Also check on initial load
+    setTimeout(updateWhatIsThisVisibility, 100);
 })();
