@@ -7,41 +7,48 @@
     <meta name="description" content="Personal website of Chryseis Liu">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6">
+    <link rel="stylesheet" href="style.css?v=2.0">
 
     <!-- Favicon -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Cellular Automata Canvas -->
+    <canvas id="automata-canvas"></canvas>
+    
+    <!-- Hint text -->
+    <div id="hint-text" class="hint-text">click around</div>
+    
+    <!-- What is this link -->
+    <div id="what-is-this" class="what-is-this hidden">
+        <a href="https://en.wikipedia.org/wiki/Cellular_automaton" target="_blank">what is this?</a>
+    </div>
+
+    <!-- Contact Links Sidebar -->
+    <div class="contact-sidebar">
+        <a href="https://scholar.google.com/citations?view_op=list_works&hl=en&user=ybwhDvEAAAAJ" class="contact-link" target="_blank" title="Google Scholar">scholar</a>
+        <a href="https://github.com/Chryseisliu" class="contact-link" target="_blank" title="GitHub">github</a>
+        <a href="https://x.com/chryseis_liu" class="contact-link" target="_blank" title="Twitter">twitter</a>
+        <a href="mailto:chryseisliu@gmail.com" class="contact-link" title="Email">email</a>
+    </div>
+
     <!-- Navigation -->
     <nav class="nav">
-        <a href="#home" class="nav-link active">Home</a>
-        <a href="#blogs" class="nav-link">Blogs</a>
-        <a href="#photography" class="nav-link">Photography</a>
-        <a href="projects.html" class="nav-link">Projects</a>
+        <a href="#home" class="nav-link active">home</a>
+        <a href="#blogs" class="nav-link">blogs</a>
+        <a href="#photography" class="nav-link">photography</a>
     </nav>
 
     <main>
         <!-- Home Section -->
         <section id="home" class="home-section">
             <div class="main-content">
-                <div class="content-wrapper">
-                    <h1 class="name">Chryseis Liu</h1>
-                    <p class="description">I'm an RA at HKU NLP lab with an unconventional education path, and a (barely) mediocre musician. I spend time on innovative ML architectures, psychedelic rock, and photographing butterflies.</p>
-                    
-                    <div class="contact-links">
-                        <a href="https://scholar.google.com/citations?view_op=list_works&hl=en&user=ybwhDvEAAAAJ" class="contact-link" target="_blank">[Google Scholar]</a>
-                        <a href="https://github.com/Chryseisliu" class="contact-link" target="_blank">[Github]</a>
-                        <a href="https://x.com/chryseis_liu" class="contact-link" target="_blank">[Twitter]</a>
-                        <a href="mailto:chryseisliu@gmail.com" class="contact-link">[Email]</a>
-                    </div>
+                <div class="profile-image">
+                    <img src="images/IMG_0609.jpeg" alt="Chryseis Liu" class="profile-img">
                 </div>
                 
-                <div class="profile-image">
-                    <img src="images/IMG_4743.jpeg" alt="Chryseis Liu" class="profile-img">
+                <div class="content-wrapper">
+                    <p class="description">hi i'm chryseis liu. depending on how you found this site, you might know me as a researcher or a mediocre musician or an aspiring mediocre athlete. i'm now interested in the 'Physics of AI', macroscopic & beyond-reductionism interpretability, complex systems, and emergence.</p>
                 </div>
             </div>
         </section>
@@ -49,14 +56,14 @@
         <!-- Blog Section -->
         <section id="blogs" class="blog-section">
             <div class="blog-content">
-                <h2 class="section-title">Latest Blog Posts</h2>
+                <h2 class="section-title">latest blog posts</h2>
                 <div class="blog-list">
                     <article class="blog-item">
                         <h3 class="blog-title">持久而顽固的幻觉</h3>
                         <p class="blog-excerpt">My shore is low, so frail and thin<br>Six inches more, and death will flood in</p>
                         <div class="blog-meta">
                             <span class="blog-date">November 11, 2024</span>
-                            <a href="blog-post-1.html" class="read-more">Read More</a>
+                            <a href="blog-post-1.html" class="read-more">read more</a>
                         </div>
                     </article>
                 </div>
@@ -66,22 +73,20 @@
         <!-- Photography Section -->
         <section id="photography" class="photography-section">
             <div class="photography-content">
-                <h2 class="section-title">Photography</h2>
+                <h2 class="section-title">photography</h2>
                 <p class="photography-intro">unpolished/unedited dump</p>
                 <p class="photography-instructions">click cover photos to view collections • click individual photos for full-size view</p>
 
                 <div class="photo-collections">
                     <!-- Collections will be generated dynamically by JavaScript -->
                 </div>
-
-
             </div>
         </section>
 
         <!-- Friends Section -->
         <section id="friends" class="friends-section">
             <div class="friends-content">
-                <h2 class="section-title">Friends</h2>
+                <h2 class="section-title">friends</h2>
                 <div class="friends-list blog-list">
                     <article class="friends-item blog-item">
                         <h3 class="friend-name blog-title">
@@ -94,6 +99,7 @@
     </main>
 
     <!-- JavaScript -->
+    <script src="js/automata.js"></script>
     <script src="js/script.js"></script>
 </body>
 </html>
