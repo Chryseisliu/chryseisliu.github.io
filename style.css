@@ -43,7 +43,7 @@ body {
 /* Hint Text at top */
 .hint-text {
     position: fixed;
-    top: 40px;
+    top: 100px;
     left: 50%;
     transform: translateX(-50%);
     color: #0066ff;
@@ -168,8 +168,9 @@ body {
 
 .profile-img {
     width: 350px;
-    height: auto;
+    height: 450px;
     object-fit: cover;
+    object-position: center 30%;
     display: block;
 }
 
@@ -822,7 +823,37 @@ img[loading="lazy"] {
         grid-template-columns: 1fr;
         gap: 15px;
     }
-    
+
+    .image-grid-two-with-text {
+        display: block;
+        margin: 30px 0;
+    }
+
+    .image-grid-two-with-text .image-item {
+        float: left;
+        width: 48%;
+        margin-right: 4%;
+        margin-bottom: 15px;
+    }
+
+    .image-grid-two-with-text .image-item-with-text {
+        float: right;
+        width: 48%;
+    }
+
+    .image-grid-two-with-text .image-item-with-text p {
+        clear: both;
+        margin-top: 15px;
+        width: 100%;
+    }
+
+    /* Clear floats after the grid */
+    .image-grid-two-with-text::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
     .image-grid-funny,
     .image-grid-better {
         grid-template-columns: 1fr;
@@ -837,6 +868,8 @@ img[loading="lazy"] {
     
     .profile-img {
         width: 280px;
+        height: 360px;
+        object-position: center 30%;
     }
     
     .description {
@@ -857,6 +890,8 @@ img[loading="lazy"] {
     
     .profile-img {
         width: 250px;
+        height: 320px;
+        object-position: center 30%;
     }
     
     .description {
@@ -919,6 +954,8 @@ img[loading="lazy"] {
     
     .profile-img {
         width: 200px;
+        height: 260px;
+        object-position: center 30%;
     }
     
     .description {
@@ -945,7 +982,7 @@ img[loading="lazy"] {
     }
     
     .hint-text {
-        top: 20px;
+        top: 60px;
         font-size: 20px;
     }
     
