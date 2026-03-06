@@ -1,0 +1,19 @@
+{
+  "artifact_dir": "/content/drive/MyDrive/modular_addition_feature_learning_outputs/effective_loss_and_phase_coherence_20260306_001658/artifact_bundle",
+  "output_dir": "/content/drive/MyDrive/modular_addition_feature_learning_outputs/effective_loss_and_phase_coherence_20260306_001658",
+  "saved_dataframe_names": [
+    "metrics",
+    "per_k",
+    "run_catalog_df",
+    "corr_df",
+    "corr_post_sat_df",
+    "delta_corr_df",
+    "perm_df",
+    "model_compare_df",
+    "summary_df",
+    "comparison_summary_df",
+    "run_corr_df",
+    "coord_compare_df"
+  ],
+  "n_files_in_output_dir": 29
+}

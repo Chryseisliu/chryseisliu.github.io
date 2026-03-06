@@ -1,0 +1,2 @@
+,run_name,t_grok,"corr(ell_neuron,test_acc)","corr(ell_neuron_norm,test_acc)","corr(ell_global,test_acc)",coh_weighted_pre_grok,coh_weighted_post_grok,ell_neuron_at_t_grok
+0,p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102,11000,0.9149924409003493,0.46716444500952103,-0.18967537962205092,0.056939629713694255,0.02983939736150205,0.5494794249534607

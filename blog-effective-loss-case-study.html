@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seeking an Effective Loss for Grokking in Modular Addition - Chryseis Liu</title>
+    <meta name="description" content="A case study in Fourier features, phase alignment, and what can go wrong with global phases.">
+
+    <link rel="stylesheet" href="style.css?v=2.0">
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-S9F0DBLET9"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-S9F0DBLET9');
+    </script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html#home" class="nav-link">home</a>
+        <a href="index.html#blogs" class="nav-link active">blogs</a>
+        <a href="index.html#photography" class="nav-link">photography</a>
+    </nav>
+
+    <main>
+        <section class="blog-post-section">
+            <div class="blog-post-content blog-post-with-toc">
+                <aside class="blog-toc" aria-label="Table of contents">
+                    <div class="blog-toc-title">Contents</div>
+                    <a href="#tl-dr">TL;DR</a>
+                    <a href="#background">1. Background</a>
+                    <a href="#claims">2. Mechanism &amp; dynamics</a>
+                    <a href="#question">3. Core question</a>
+                    <a href="#fourier">4. Fourier features</a>
+                    <a href="#alignment">5. Global vs neuronwise alignment</a>
+                    <a href="#results">6. Results</a>
+                    <a href="#time-trend">7. Is this just time?</a>
+                    <a href="#confound">8. Baselines and confound-control</a>
+                    <a href="#competition">9. Frequency competition</a>
+                    <a href="#tells-us">10. What this tells us</a>
+                    <a href="#next">11. Where to go next</a>
+                    <a href="#caution">Useful Cautionary Lessons</a>
+                    <a href="#citation">Citation</a>
+                </aside>
+
+                <article>
+                    <header class="blog-post-header">
+                        <h1 class="blog-post-title">Seeking an “Effective Loss” for Grokking in Modular Addition</h1>
+                        <div class="blog-post-meta">
+                            <span class="blog-post-date">March 3, 2026</span>
+                        </div>
+                        <p class="blog-subtitle"><em>(A case study in Fourier features, phase alignment, and what can go wrong with “global phases”)</em></p>
+                    </header>
+
+                    <div class="blog-post-body">
+                        <section id="tl-dr" class="blog-section-block">
+                            <h2>TL;DR</h2>
+                            <p>I read the very recent "<a href="https://arxiv.org/abs/2602.16849" target="_blank" rel="noopener noreferrer">On the Mechanism and Dynamics of Modular Addition: Fourier Features, Lottery Ticket, and Grokking</a>" paper, and developed some ideas. I am not trying to propose/refine the grokking theory, but am testing whether a checkpoint-level mechanistic score can be defined in a way that is measurement-valid, coordinate-aware, and less confounded by pure scale growth, so that we can meaningfully ask whether phase-alignment structure tracks generalization.</p>
+                            <p>Concretely, this case study builds candidate alignment scores (global-phase and neuronwise) from Fourier coefficients, stress-tests coordinate assumptions (decoded vs raw pairing), tests whether global phase is trustworthy when coherence is low, compares these scores against real test accuracy, and adds simple defenses against the objection that any strong correlation might just be epoch/time. As a sanity check, I re-evaluate saved checkpoints and confirm recomputed accuracies match the stored values.</p>
+                            <p>Key takeaways from this run (\(p=23\), width=512, ReLU, random data, weight decay=2.0):</p>
+                            <ul>
+                                <li>Using sampled checkpoints, I define \(t_{\text{grok}}\) as the first checkpoint where test accuracy reaches 95%, and find \(t_{\text{grok}}=10400\).</li>
+                                <li>A global phase-based alignment score can be actively misleading under low coherence; I show an explicit counterexample.</li>
+                                <li>The raw neuronwise score \(\ell_{\text{neuron}}\) does not simply rise with test accuracy: it peaks at epoch \(9400\), shortly before \(t_{\text{grok}}=10400\), then declines and flattens. The normalized score \(\ell_{\text{neuron\_norm}}\) tells a different story and stays near-saturated.</li>
+                                <li>In this run, global coherence does not increase at grokking; the weighted joint coherence decreases.</li>
+                                <li>The anti-time-trend checks help, but they do not turn this into a causal story: after controlling for simple magnitude baselines, the added coefficient on \(\ell_{\text{neuron\_norm}}\) is slightly negative in this run.</li>
+                            </ul>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="background" class="blog-section-block">
+                            <h2>1. Background: modular addition and grokking</h2>
+                            <h3>Modular addition toy task</h3>
+                            <p>Fix a prime modulus \(p\) (here \(p=23\)). Inputs are pairs \((a,b)\) and the target is:</p>
+                            <p>\[
+                            y = (a+b) \bmod p.
+                            \]</p>
+                            <p>We train a small MLP classifier to predict \(y\).</p>
+
+                            <h3>Grokking (in this setting)</h3>
+                            <p>“Grokking” refers to the phenomenon where training accuracy becomes perfect early, test accuracy remains poor for a long time, and then test accuracy suddenly rises to near-perfect later.</p>
+                            <p>For this case study (with sampled checkpoints), I use:</p>
+                            <p>\[
+                            t_{\text{grok}} = \min\{t: \text{test\_accuracy}(t) \ge 0.95\}.
+                            \]</p>
+                            <p>That is: the first sampled checkpoint where test accuracy crosses 95%.</p>
+                            <p>In this run the crossing is sustained thereafter, so this thresholded checkpoint is a reasonable proxy.</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="claims" class="blog-section-block">
+                            <h2>2. What the original “Mechanism and Dynamics” work claims</h2>
+                            <h3>2.1 Baseline and Open Gap</h3>
+                            <p>Nanda et al. (2023) already observed one-layer transformers on modular addition learn Fourier features, many neurons become approximately single-frequency, and input/output phases satisfy a doubled relation (\(\psi\approx 2\phi\)). The open gap is how noisy neuron-level features exactly aggregate into a correct network-level computation.</p>
+
+                            <h3>2.2 Network-Level Aggregation</h3>
+                            <p>The authors describe this with the phrase “majority voting,” but mathematically it is coherent summation with cancellation: when neuron phases are spread out, noise terms cancel and the correct signal remains. In their analysis this appears through conditions like
+                            \[
+                            \sum_m e^{i\ell\phi_m}\approx 0\quad \text{for } \ell\in\{2,4\},
+                            \]
+                            together with frequency balance and similar magnitudes across neurons. The resulting predictor is a “flawed indicator”: it includes extra peaks (e.g. at \(2x,2y\) mod \(p\)), but the correct class still keeps a strict margin (reported as \(p/4\) in the normalized indicator form, equivalently \(aNp/8\) under their logit scaling). This is why they argue overparameterization helps: more neurons improve phase diversity and make cancellation work better.</p>
+
+                            <h3>2.3 Frequency Selection Dynamics</h3>
+                            <p>Their second claim is a frequency-selection dynamic under small initialization. For each (neuron, frequency) pair they derive a low-dimensional ODE system. Here \(\alpha\) and \(\beta\) denote the input/output amplitude for that specific neuron-frequency pair (local variables, not yet averaged across neurons), and
+                            \[
+                            D=(2\phi-\psi)\bmod 2\pi
+                            \]
+                            is the phase-misalignment variable, with dynamics of the form
+                            \[
+                            \partial_t\alpha \approx 2p\,\alpha\beta\cos D,\quad
+                            \partial_t\beta \approx p\,\alpha^2\cos D,\quad
+                            \partial_t D \approx -p\left(4\beta^2-\alpha^2/\beta\right)\sin D.
+                            \]
+                            This makes alignment a growth gate: frequencies with smaller initial \(|D|\) align faster, and the eventual winner is determined by the combination of initial phase misalignment and initial spectral magnitude. Based on close reading the paper is a little ambiguous but implies phase misalignment dominates in their theoretical regime, while magnitude matters in practice. The authors call this winner-take-all effect a “lottery ticket” mechanism; this is stretched relative to the original Lottery Ticket Hypothesis (sparse subnetworks), because the selection object here is phase-aligned frequency components rather than sparse masks.</p>
+
+                            <h3>2.4 Phase Alignment as Dynamics</h3>
+                            <p>Their third claim is that phase alignment is dynamical, not merely observed: \(D=0\) is a stable attractor (with \(D=\pi\) unstable, up to measure-zero cases). The doubled phase relation is tied to quadratic feature interactions, which generate terms of the form \(\cos(\cdot+2\phi)\) and therefore couple naturally to \(\psi\).</p>
+                            <p>This raises a natural “effective theory” question (in the spirit of Liu et al., <em>Towards Understanding Grokking: An Effective Theory of Representation Learning</em>):</p>
+                            <blockquote class="blog-quote">
+                                <p>Can I define a low-dimensional <em>effective loss / score</em> on weights that captures this competition and tracks generalization?</p>
+                            </blockquote>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="question" class="blog-section-block">
+                            <h2>3. Our question and why the earlier attempt went off the rails</h2>
+                            <p>A naive attempt might define a “lottery score”</p>
+                            <p>\[
+                            \ell_{\text{lottery}} = \sum_k \alpha_k^2\,\beta_k^2\,\cos(D_k),
+                            \]</p>
+                            <p>where \(\alpha_k, \beta_k\) are frequency-level magnitudes (aggregated over neurons) at input/output and \(D_k\) is a phase mismatch. So these are related to, but distinct from, the local \(\alpha,\beta\) variables used in Section 2.3.</p>
+                            <p>But there’s a subtle issue:</p>
+                            <blockquote class="blog-quote">
+                                <p>In a width-\(m\) network, each frequency \(k\) has \(m\) different phases (one per neuron).<br>
+                                Collapsing them into <em>one global phase</em> can be meaningless if those phases cancel out.</p>
+                            </blockquote>
+                            <p>My last attempt effectively assumed the global phase was always meaningful, then layered additional dynamics (ODE/Jacobian/etc.) on top. This can produce incorrect “mechanistic conclusions.”</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="fourier" class="blog-section-block">
+                            <h2>4. Fourier features: turning weights into per-frequency complex coefficients</h2>
+                            <p>Because \(p=23\) uses a real Fourier basis with DC + cosine/sine pairs, each frequency \(k\in\{1,\dots,(p-1)/2\}\) corresponds to indices \(i_{\cos}=2k-1\) and \(i_{\sin}=2k\).</p>
+                            <p>Let hidden width be \(m\) (here \(m=512\)). For each neuron \(j\) and frequency \(k\), define complex coefficients:</p>
+                            <p>Input-side (from \(W_{\mathrm{in}}\in\mathbb{R}^{m\times p}\)):</p>
+                            <p>\[
+                            A_{j,k} = W_{\mathrm{in}}[j,i_{\cos}] + i\,W_{\mathrm{in}}[j,i_{\sin}].
+                            \]</p>
+                            <p>Output-side (from \(W_{\mathrm{out}}\in\mathbb{R}^{p\times m}\)):</p>
+                            <p>\[
+                            B_{j,k} = W_{\mathrm{out}}[i_{\cos},j] + i\,W_{\mathrm{out}}[i_{\sin},j].
+                            \]</p>
+                            <p>Then magnitude summaries:</p>
+                            <p>\[
+                            \alpha_k = \sqrt{\mathbb{E}_j |A_{j,k}|^2},\qquad
+                            \beta_k = \sqrt{\mathbb{E}_j |B_{j,k}|^2}.
+                            \]</p>
+                            <p>In the codebase, there is an additional subtlety: the model stores a Fourier basis matrix, and the “mechanism” utilities use a decoded coordinate system via a basis transform. I therefore compare raw pairing vs decoded pairing and find they can differ drastically:</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>pearson(decoded,raw)</th>
+                                            <th>mean_abs_ratio(decoded/raw)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>ell_neuron</td><td>-0.989643</td><td>41.0202</td></tr>
+                                        <tr><td>top1_out</td><td>-0.601669</td><td>1.04266</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>-0.449375</td><td>39.7208</td></tr>
+                                        <tr><td>ell_global</td><td>0.163316</td><td>2.60735</td></tr>
+                                        <tr><td>coherence_joint_weighted</td><td>0.928163</td><td>0.914953</td></tr>
+                                        <tr><td>sum_alpha2beta2</td><td>0.999984</td><td>1.09141</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/001_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__coord_mode_comparison.png" alt="decoded vs raw" loading="lazy" class="blog-image">
+                                <figcaption>Decoded vs raw pairing comparison.</figcaption>
+                            </figure>
+                            <p>For reference, decoded vs raw per-frequency magnitudes at one epoch:</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>k</th>
+                                            <th>alpha_decoded</th>
+                                            <th>beta_decoded</th>
+                                            <th>alpha_raw</th>
+                                            <th>beta_raw</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>1</td><td>0.438788</td><td>0.475687</td><td>0.421154</td><td>0.468041</td></tr>
+                                        <tr><td>2</td><td>0.434632</td><td>0.469976</td><td>0.421162</td><td>0.459401</td></tr>
+                                        <tr><td>3</td><td>0.454894</td><td>0.488653</td><td>0.420134</td><td>0.461778</td></tr>
+                                        <tr><td>4</td><td>0.434974</td><td>0.473973</td><td>0.42238</td><td>0.451873</td></tr>
+                                        <tr><td>5</td><td>0.40966</td><td>0.443738</td><td>0.43655</td><td>0.463319</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="alignment" class="blog-section-block">
+                            <h2>5. Global phases vs neuronwise alignment</h2>
+                            <p>This is the conceptual core.</p>
+                            <h3>5.1 What does “phase coherence” mean?</h3>
+                            <p>Each \(A_{j,k}\) has a phase \(\theta_{j,k} = \arg(A_{j,k})\). If phases cluster, they are coherent. If phases spread around the circle, they are incoherent and cancel.</p>
+                            <p>A standard concentration metric is:</p>
+                            <p>\[
+                            C_k^{\text{in}} = \frac{\left|\sum_j A_{j,k}\right|}{\sum_j |A_{j,k}| + \varepsilon}\in[0,1].
+                            \]</p>
+                            <p>Similarly \(C_k^{\text{out}}\) with \(B\).</p>
+                            <p>\(C\approx 1\) means phases align (coherent), while \(C\approx 0\) means phases disperse (incoherent; heavy cancellation). In this run, the weighted joint coherence is low throughout and actually drops from \(0.0447\) before grokking to \(0.0299\) after grokking.</p>
+                            <p>Heatmaps over time:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/004_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__coherence_heatmaps.png" alt="phase concentration" loading="lazy" class="blog-image">
+                                <figcaption>Input/output phase concentration heatmaps over time.</figcaption>
+                            </figure>
+
+                            <h3>5.2 Global phase-based alignment (fragile)</h3>
+                            <p>Global-phase alignment collapses all neurons into one phasor:</p>
+                            <p>\[
+                            \bar A_k = \sum_j A_{j,k},\quad \bar B_k = \sum_j B_{j,k}
+                            \]</p>
+                            <p>and defines phases:</p>
+                            <p>\[
+                            \phi_k = \arg(\bar A_k),\quad \psi_k=\arg(\bar B_k),\quad
+                            D_k^{\text{global}}=2\phi_k-\psi_k.
+                            \]</p>
+                            <p>Then a score like:</p>
+                            <p>\[
+                            \ell_{\text{global}}=\sum_k \alpha_k^2\beta_k^2\cos(D_k^{\text{global}}).
+                            \]</p>
+                            <p>This is only meaningful when \(C_k\) is not tiny.</p>
+
+                            <h3>5.3 Neuronwise weighted alignment (robust)</h3>
+                            <p>Instead, compute mismatch per neuron:</p>
+                            <p>\[
+                            D_{j,k} = 2\arg(A_{j,k}) - \arg(B_{j,k}).
+                            \]</p>
+                            <p>weight by “how much this neuron-frequency matters”:</p>
+                            <p>\[
+                            w_{j,k}=|A_{j,k}|^2|B_{j,k}|^2.
+                            \]</p>
+                            <p>Define a robust alignment score:</p>
+                            <p>\[
+                            \ell_{\text{neuron}} = \sum_k\sum_j w_{j,k}\cos(D_{j,k}).
+                            \]</p>
+                            <p>And a scale-controlled version:</p>
+                            <p>\[
+                            \ell_{\text{neuron\_norm}} = \frac{\sum_k\sum_j w_{j,k}\cos(D_{j,k})}{\sum_k\sum_j w_{j,k}+\varepsilon}\in[-1,1].
+                            \]</p>
+
+                            <h3>5.4 A concrete failure mode: why global phase can “lie”</h3>
+                            <p>At low coherence, \(\bar A_k\) can be near zero and its angle is extremely sensitive. In one checkpoint shown here, coherence is low, \(\cos(D_k^{\text{global}})\) looks strongly aligned, but neuronwise weighted alignment is not.</p>
+                            <p>The diagnostic plots:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/007_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__failure_mode_demo.png" alt="failure mode plot" loading="lazy" class="blog-image">
+                                <figcaption>Failure mode: global-phase signal can mislead under low coherence.</figcaption>
+                            </figure>
+                            <p>This is the main methodological point: global phase is not a safe effective variable without a coherence check.</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="results" class="blog-section-block">
+                            <h2>6. Results: grokking, magnitudes, and mechanistic scores</h2>
+                            <h3>6.1 Grokking time and learning curves</h3>
+                            <p>In this run, I find \(t_{\text{grok}}=10400\).</p>
+                            <p>Accuracy and loss:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/002_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__accuracy_and_loss_vs_epoch.png" alt="accuracy and loss" loading="lazy" class="blog-image">
+                                <figcaption>Accuracy and loss vs epoch (with grokking boundary).</figcaption>
+                            </figure>
+
+                            <h3>6.2 Frequency magnitudes over time</h3>
+                            <p>Per-frequency RMS magnitudes:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/005_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__magnitude_heatmaps.png" alt="magnitudes heatmap" loading="lazy" class="blog-image">
+                                <figcaption>Per-frequency RMS magnitudes over time.</figcaption>
+                            </figure>
+
+                            <h3>6.3 Mechanistic scores over time</h3>
+                            <p>Raw scores (scale-sensitive) and normalized scores (scale-controlled):</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/003_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__effective_scores_vs_epoch.png" alt="scores over time" loading="lazy" class="blog-image">
+                                <figcaption>Mechanistic scores (raw and normalized) over time.</figcaption>
+                            </figure>
+                            <p>The most visually striking feature here is in the raw neuronwise score: \(\ell_{\text{neuron}}\) rises early, peaks at epoch \(9400\), then starts decreasing before the grokking checkpoint at \(10400\) and later flattens. So in this primary run the interesting temporal signature is not “higher score means later higher test accuracy” in a monotone sense, but rather a pre-grok peak followed by relaxation. By contrast, \(\ell_{\text{neuron\_norm}}\) is already near 1 well before \(t_{\text{grok}}\) and does not show the same pre-grok turnover.</p>
+
+                            <h3>6.4 Scatter views (intuition)</h3>
+                            <p>Scatter of test accuracy vs various scores:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/006_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__correlation_scatter_panels.png" alt="scatter plots" loading="lazy" class="blog-image">
+                                <figcaption>Scatter of test accuracy against selected scores.</figcaption>
+                            </figure>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="time-trend" class="blog-section-block">
+                            <h2>7. Is this just a time trend?</h2>
+                            <p>This is the strongest skeptical objection to any checkpoint-level correlation in a grokking run. Epochs are not i.i.d.; many quantities drift with training time, so a large Pearson coefficient alone is not enough.</p>
+
+                            <h3>7.1 Does \(\ell_{\text{neuron}}\) or \(\ell_{\text{neuron\_norm}}\) track test accuracy (hence grokking) in a meaningful way?</h3>
+                            <p>Yes, but the two scores behave differently. Over all 251 checkpoints, \(\ell_{\text{neuron}}\) has Pearson \(0.853\) and Spearman \(0.126\), while \(\ell_{\text{neuron\_norm}}\) has Pearson \(0.416\) and Spearman \(0.809\). For the question in this post, the raw score is more informative because it shows the distinctive pre-grok peak-and-relax pattern. The normalized score is mainly useful as a robustness check that the story is not purely an artifact of raw scale.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>full-run Pearson</th>
+                                            <th>full-run Spearman</th>
+                                            <th>n</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>ell_neuron</td><td>0.852752</td><td>0.125778</td><td>251</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>0.415690</td><td>0.808837</td><td>251</td></tr>
+                                        <tr><td>ell_global</td><td>-0.206572</td><td>-0.642997</td><td>251</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>7.2 Does it change near the grokking transition?</h3>
+                            <p>Yes, but not as a single clean step exactly at \(t_{\text{grok}}\). For the raw neuronwise score, the more precise statement is: it peaks at epoch \(9400\), then turns downward before \(t_{\text{grok}}=10400\), while test accuracy keeps rising and crosses 95% at \(10400\). In the transition-window first-difference analysis, \(\mathrm{corr}(\Delta \ell_{\text{neuron}}, \Delta \mathrm{test\_acc})=0.439\) and \(\mathrm{corr}(\Delta \ell_{\text{neuron\_norm}}, \Delta \mathrm{test\_acc})=0.414\), while the global-phase comparison is negative (\(-0.177\)).</p>
+                            <p>This matters for interpretation: the neuronwise signal is not a monotone co-rise with test accuracy, and it is not a one-timestep trigger either. In this run it looks more like an anticipatory pre-grok peak in the raw score, followed by a decline/plateau as generalization finishes improving.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>corr(\(\Delta\)metric, \(\Delta\)test_acc)</th>
+                                            <th>Spearman</th>
+                                            <th>n</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>ell_neuron</td><td>0.438578</td><td>0.493835</td><td>31</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>0.413824</td><td>0.441853</td><td>31</td></tr>
+                                        <tr><td>ell_global</td><td>-0.176867</td><td>-0.139130</td><td>31</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>7.3 What if we remove the trivial early-training drift?</h3>
+                            <p>I also recompute correlations only after train accuracy has already saturated, starting at epoch 2200. In that post-saturation slice, \(\ell_{\text{neuron\_norm}}\) remains strongly associated with test accuracy (Pearson \(0.941\), Spearman \(0.777\)), while \(\ell_{\text{global}}\) stays negative (Pearson \(-0.347\), Spearman \(-0.648\)). I treat this as a robustness check, not the main mechanistic result.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>post-saturation Pearson</th>
+                                            <th>post-saturation Spearman</th>
+                                            <th>n</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>ell_neuron</td><td>0.798541</td><td>-0.035365</td><td>240</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>0.941110</td><td>0.777498</td><td>240</td></tr>
+                                        <tr><td>ell_global</td><td>-0.347233</td><td>-0.647772</td><td>240</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>7.4 What if the epoch order is only weakly perturbed?</h3>
+                            <p>I also run a block-permutation sanity check on the post-saturation series. Both neuronwise scores survive it: \(\ell_{\text{neuron\_norm}}\) has observed correlation \(0.941\) with two-sided \(p\approx 0.001\), and \(\ell_{\text{neuron}}\) has \(0.799\) with \(p\approx 0.001\). \(\ell_{\text{global}}\) remains worse and negative.</p>
+                            <p>So the answer to “is this only a time trend?” is: not obviously. The relationship is still time-series data and therefore still observational, but it survives several minimal defenses that go beyond a raw full-run correlation.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>observed corr</th>
+                                            <th>null mean</th>
+                                            <th>null std</th>
+                                            <th>two-sided p</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>ell_neuron</td><td>0.798541</td><td>-0.003433</td><td>0.125090</td><td>0.000999</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>0.941110</td><td>0.002675</td><td>0.127562</td><td>0.000999</td></tr>
+                                        <tr><td>ell_global</td><td>-0.347233</td><td>-0.008710</td><td>0.127805</td><td>0.006993</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>7.5 What do the other runs say?</h3>
+                            <p>The auxiliary runs suggest the same broad pattern within each run: the neuronwise construction usually tracks test accuracy better than \(\ell_{\text{global}}\). I treat this section cautiously because these runs are heterogeneous, and for them I only have correlation summaries here rather than full score-versus-epoch curves.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>run_name</th>
+                                            <th>t_grok</th>
+                                            <th>corr(ell_neuron_norm,test_acc)</th>
+                                            <th>corr(ell_global,test_acc)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>primary ReLU random wd=2.0</td><td>10400</td><td>0.415690</td><td>-0.206572</td></tr>
+                                        <tr><td>Quad random wd=0</td><td>9200</td><td>0.755449</td><td>-0.611899</td></tr>
+                                        <tr><td>Quad single-freq wd=0</td><td>1000</td><td>0.796293</td><td>-0.173810</td></tr>
+                                        <tr><td>ReLU random scale=0.01 wd=0</td><td>2200</td><td>0.902158</td><td>0.408718</td></tr>
+                                        <tr><td>ReLU random wd=0</td><td>600</td><td>0.957542</td><td>-0.279192</td></tr>
+                                        <tr><td>ReLU random wd=0 (short)</td><td>400</td><td>0.995223</td><td>-0.206174</td></tr>
+                                        <tr><td>ReLU single-freq wd=0</td><td>1400</td><td>0.905622</td><td>0.301164</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="confound" class="blog-section-block">
+                            <h2>8. Baselines and confound-control</h2>
+                            <p>The harder question is not whether these scores correlate with test accuracy, but whether they outperform bad baselines and whether any alignment-specific signal remains after controlling for magnitude-like growth.</p>
+                            <p>Over the full run, the main correlations are:</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>metric</th>
+                                            <th>pearson_corr_with_test_accuracy</th>
+                                            <th>spearman_corr_with_test_accuracy</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>param_norm</td><td>0.938828</td><td>0.119228</td></tr>
+                                        <tr><td>ell_neuron</td><td>0.852752</td><td>0.125778</td></tr>
+                                        <tr><td>sum_alpha2beta2</td><td>0.850553</td><td>0.121375</td></tr>
+                                        <tr><td>top1_out</td><td>0.682059</td><td>-0.322528</td></tr>
+                                        <tr><td>top1_in</td><td>0.537051</td><td>-0.011239</td></tr>
+                                        <tr><td>ell_abs_norm</td><td>0.421137</td><td>0.808837</td></tr>
+                                        <tr><td>ell_neuron_norm</td><td>0.415690</td><td>0.808837</td></tr>
+                                        <tr><td>H_in</td><td>0.012456</td><td>0.607531</td></tr>
+                                        <tr><td>ell_global</td><td>-0.206572</td><td>-0.642997</td></tr>
+                                        <tr><td>ell_global_norm</td><td>-0.413616</td><td>-0.685532</td></tr>
+                                        <tr><td>H_out</td><td>-0.514215</td><td>0.389748</td></tr>
+                                        <tr><td>coherence_in_weighted</td><td>-0.788074</td><td>-0.808001</td></tr>
+                                        <tr><td>coherence_out_weighted</td><td>-0.821839</td><td>-0.772502</td></tr>
+                                        <tr><td>coherence_joint_weighted</td><td>-0.910400</td><td>-0.808853</td></tr>
+                                        <tr><td>coherence_mean</td><td>-0.913383</td><td>-0.808853</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p>\(\ell_{\text{neuron}}\) clearly outperforms the bad baseline \(\ell_{\text{global}}\), which is negative and also fails the counterexample in Section 5.4. But it does not cleanly beat simple magnitude baselines on raw Pearson; \(\sum_k \alpha_k^2\beta_k^2\) and parameter norm are just as strong or stronger.</p>
+                            <p>I also run a simple confound-control regression: baseline predictors are magnitude-like terms, and I test whether adding the alignment-only score improves fit.</p>
+                            <div class="blog-table-wrap">
+                                <table class="blog-table">
+                                    <thead>
+                                        <tr>
+                                            <th>model</th>
+                                            <th>n</th>
+                                            <th>r2</th>
+                                            <th>coef[sum_alpha2beta2]</th>
+                                            <th>coef[top1_out]</th>
+                                            <th>coef[param_norm]</th>
+                                            <th>coef[ell_neuron_norm]</th>
+                                            <th>coef[ell_abs_norm]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>baseline</td><td>251</td><td>0.934770</td><td>-0.125615</td><td>-0.079513</td><td>0.355308</td><td>nan</td><td>nan</td></tr>
+                                        <tr><td>baseline + ell_neuron_norm</td><td>251</td><td>0.941911</td><td>-0.149663</td><td>-0.084452</td><td>0.390590</td><td>-0.019205</td><td>nan</td></tr>
+                                        <tr><td>baseline + ell_abs_norm</td><td>251</td><td>0.941929</td><td>-0.149949</td><td>-0.084552</td><td>0.391087</td><td>nan</td><td>-0.019317</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p>The incremental improvement is real but small (about \(0.007\) in \(R^2\)), and the added coefficient on \(\ell_{\text{neuron\_norm}}\) is slightly negative. The corresponding scale-controlled partial correlation is also negative (\(-0.331\)). The honest interpretation is:</p>
+                            <blockquote class="blog-quote">
+                                <p>In this run, the raw neuronwise score is the most interesting signal because it peaks before grokking, while the normalized version mainly serves as a robustness check against trivial time or scale stories.<br>
+                                But once simple magnitude baselines are included, the evidence for a positive alignment-only effect is weak. So this is a useful observable, not yet a clean explanatory variable.</p>
+                            </blockquote>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="competition" class="blog-section-block">
+                            <h2>9. Frequency “competition” diagnostics</h2>
+                            <p>I also look at frequency entropy and top-frequency mass:</p>
+                            <figure class="image-single blog-figure">
+                                <img src="effective_outputs_0305/008_p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102__frequency_competition_diagnostics.png" alt="entropy and top-mass" loading="lazy" class="blog-image">
+                                <figcaption>Frequency entropy and top-frequency mass.</figcaption>
+                            </figure>
+                            <p>After the grokking boundary, the frequency-entropy and top-frequency-mass curves stay fairly flat. So these diagnostics do not show a dramatic winner-take-all takeover by a single frequency in this run.</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="tells-us" class="blog-section-block">
+                            <h2>10. What this case study tells us</h2>
+                            <h3>What it proves / establishes</h3>
+                            <p>I can extract Fourier magnitudes and phase statistics from real checkpoints and reproduce stored accuracies. Global-phase alignment is not generally valid without coherence, and the post shows an explicit counterexample. Neuronwise alignment is a robust effective observable that behaves sensibly even when global phases cancel.</p>
+
+                            <h3>What it suggests (but does not prove causally)</h3>
+                            <p>Some low-dimensional scalar(s) do track generalization in this run, but not always in a simple monotone way. The clearest temporal signature is that the raw neuronwise score peaks before grokking and then relaxes. The normalized score is less useful for that purpose because it is nearly saturated early, though it still helps as a robustness check. But simple magnitude baselines also track strongly, and the scale-controlled confound analysis does not yield a positive alignment-only effect. So the current evidence supports measurement value more than mechanism-level explanation.</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="next" class="blog-section-block">
+                            <h2>11. Where to go next</h2>
+                            <p>To make this a real “effective theory” result (rather than a single-run case study), the next steps are:</p>
+                            <ol>
+                                <li>Weighted coherence matched to alignment weights: measure phase coherence using the same weights \(w_{j,k}\) to test whether “important neurons” become coherent even if global coherence drops.</li>
+                                <li>Interventions: modify training to selectively affect alignment (e.g., constrain phases, change regularization) while keeping norms similar.</li>
+                            </ol>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="caution" class="blog-section-block">
+                            <h2>Useful cautionary lessons</h2>
+                            <ol>
+                                <li>Coordinate choices matter: decoded vs raw pairing can flip signs and alter interpretation. Any mechanistic score must specify coordinate conventions and include a sanity check.</li>
+                                <li>Phase cancellation matters: if coherence is low, global phasors are unstable summaries; neuronwise alignment is safer.</li>
+                                <li>Norm and time confounds matter: strong raw correlations can mostly reflect scale growth or epoch drift. Always compare against magnitude baselines and include at least one anti-time-trend check.</li>
+                            </ol>
+
+                            <p>This does not show that the proposed effective loss captures or precisely predicts grokking. It is still one observational time series.</p>
+                        </section>
+
+                        <hr class="section-divider">
+
+                        <section id="citation" class="blog-section-block">
+                            <h2>Citation</h2>
+                            <p>He, Jianliang; Wang, Leda; Chen, Siyu; Yang, Zhuoran.<br>
+                            <strong>On the Mechanism and Dynamics of Modular Addition: Fourier Features, Lottery Ticket, and Grokking.</strong><br>
+                            <em>arXiv preprint</em> arXiv:2602.16849, 2026.<br>
+                            <a href="https://arxiv.org/abs/2602.16849" target="_blank" rel="noopener noreferrer">https://arxiv.org/abs/2602.16849</a></p>
+
+                            <p>If you'd like to cite this blogpost:</p>
+                            <pre class="blog-code"><code>@misc{liu2026effective-loss-grokking,
+  title        = {Seeking an Effective Loss for Grokking in Modular Addition},
+  author       = {Liu, Chryseis},
+  year         = {2026},
+  month        = {March},
+  url          = {https://chryseisliu.github.io/blog-effective-loss-case-study.html},
+  note         = {Blog post}
+}</code></pre>
+                        </section>
+                    </div>
+
+                    <div class="blog-post-footer">
+                        <a href="index.html#blogs" class="back-link">← back to blog</a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

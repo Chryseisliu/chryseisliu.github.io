@@ -1,0 +1,8 @@
+,run_name,is_comparable_to_primary,comparison_exclusions,p,d_mlp,act_type,init_type,init_scale,weight_decay,timestamp,parse_ok,n_train,n_test,n_unique_train_labels,n_unique_test_labels,frac_train_observed,has_holdout,checkpoint_selection_mode,n_checkpoints_selected
+0,p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102,True,,23,512,ReLU,random,0.1,2,08180102,True,396,133,23,23,0.7485822306238186,True,all,251
+1,p_23_dmlp_512_Quad_random_scale_0.1_decay_0_08151413,False,"different_activation, different_train_size, different_test_size",23,512,Quad,random,0.1,0,08151413,True,529,529,23,23,0.5,True,all,51
+2,p_23_dmlp_512_Quad_single-freq_scale_0.02_decay_0_08151819,False,"different_activation, different_init, different_train_size, different_test_size",23,512,Quad,single-freq,0.02,0,08151819,True,529,529,23,23,0.5,True,all,51
+3,p_23_dmlp_512_ReLU_random_scale_0.01_decay_0_08151859,False,"different_train_size, different_test_size",23,512,ReLU,random,0.01,0,08151859,True,529,529,23,23,0.5,True,all,51
+4,p_23_dmlp_512_ReLU_random_scale_0.1_decay_0_08142058,False,"different_train_size, different_test_size",23,512,ReLU,random,0.1,0,08142058,True,529,529,23,23,0.5,True,all,51
+5,p_23_dmlp_512_ReLU_random_scale_0.1_decay_0_11122351,False,"different_train_size, different_test_size",23,512,ReLU,random,0.1,0,11122351,True,529,529,23,23,0.5,True,all,26
+6,p_23_dmlp_512_ReLU_single-freq_scale_0.002_decay_0_08151833,False,"different_init, different_train_size, different_test_size",23,512,ReLU,single-freq,0.002,0,08151833,True,529,529,23,23,0.5,True,all,51

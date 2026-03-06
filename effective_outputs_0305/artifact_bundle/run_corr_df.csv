@@ -1,0 +1,4 @@
+,x,y,n,pearson,spearman
+0,ell_neuron_norm_at_post_sat_start,t_grok_checkpoint,1,,
+1,delta_ell_neuron_norm_at_t_grok,t_grok_checkpoint,1,,
+2,max_abs_delta_ell_neuron_norm_in_grok_window,t_grok_checkpoint,1,,

@@ -1,0 +1,29 @@
+Effective loss + phase coherence artifact summary
+Primary run: p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102
+t_grok checkpoint: 10400
+COORDINATE_PRIMARY_MODE: decoded
+Comparable runs: ['p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102']
+
+Key scalar correlations:
+- primary_corr_neuron: 0.8527515418907794
+- primary_corr_neuron_norm: 0.41569018899677834
+- primary_corr_magnitude: 0.8505529203774534
+- primary_corr_global: -0.20657215345112837
+
+Weighted coherence pre/post grok:
+- coh_pre: 0.04471633504503048
+- coh_post: 0.02986931571521651
+
+Saved DataFrame objects:
+- metrics
+- per_k
+- run_catalog_df
+- corr_df
+- corr_post_sat_df
+- delta_corr_df
+- perm_df
+- model_compare_df
+- summary_df
+- comparison_summary_df
+- run_corr_df
+- coord_compare_df

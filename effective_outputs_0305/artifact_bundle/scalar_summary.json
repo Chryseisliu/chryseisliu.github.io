@@ -1,0 +1,70 @@
+{
+  "t_grok": 10400,
+  "primary_corr_neuron": 0.8527515418907794,
+  "primary_corr_neuron_norm": 0.41569018899677834,
+  "primary_corr_magnitude": 0.8505529203774534,
+  "primary_corr_global": -0.20657215345112837,
+  "coh_pre": 0.04471633504503048,
+  "coh_post": 0.02986931571521651,
+  "partial_phase": -0.3308769334539202,
+  "basis_check": {
+    "p": 23,
+    "K": 11,
+    "dc_is_constant": true,
+    "pair_orthogonality_max": 7.37607479095459e-07,
+    "pair_norm_err_max": 1.1920928955078125e-07,
+    "dc_dot_max": 4.954636096954346e-07
+  },
+  "accuracy_validation": {
+    "validated": true,
+    "epoch": 0,
+    "stored_train_accuracy": 0.03787878787878788,
+    "computed_train_accuracy": 0.03787878900766373,
+    "stored_test_accuracy": 0.06015037593984962,
+    "computed_test_accuracy": 0.060150377452373505,
+    "train_abs_diff": 1.1288758469674143e-09,
+    "test_abs_diff": 1.5125238839175381e-09
+  },
+  "accuracy_validations": [
+    {
+      "epoch": 0,
+      "stored_train_accuracy": 0.03787878787878788,
+      "computed_train_accuracy": 0.03787878900766373,
+      "stored_test_accuracy": 0.06015037593984962,
+      "computed_test_accuracy": 0.060150377452373505,
+      "train_abs_diff": 1.1288758469674143e-09,
+      "test_abs_diff": 1.5125238839175381e-09
+    },
+    {
+      "epoch": 25000,
+      "stored_train_accuracy": 1.0,
+      "computed_train_accuracy": 1.0,
+      "stored_test_accuracy": 0.9774436090225563,
+      "computed_test_accuracy": 0.9774436354637146,
+      "train_abs_diff": 0.0,
+      "test_abs_diff": 2.644115826289095e-08
+    }
+  ],
+  "primary_run_info": {
+    "p": 23,
+    "d_mlp": 512,
+    "act_type": "ReLU",
+    "init_type": "random",
+    "init_scale": 0.1,
+    "weight_decay": 2,
+    "timestamp": "08180102",
+    "parse_ok": true,
+    "run_name": "p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102",
+    "n_train": 396,
+    "n_test": 133,
+    "n_unique_train_labels": 23,
+    "n_unique_test_labels": 23,
+    "frac_train_observed": 0.7485822306238186,
+    "has_holdout": true,
+    "checkpoint_selection_mode": "all",
+    "n_checkpoints_selected": 251
+  },
+  "comparable_run_names": [
+    "p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102"
+  ]
+}

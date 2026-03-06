@@ -1,0 +1,41 @@
+{
+  "BASE": "/content/modular-addition-feature-learning",
+  "SAVED_MODELS": "/content/modular-addition-feature-learning/src/saved_models",
+  "PRIMARY_RUN_NAME": "p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102",
+  "TARGET_MODULUS": 23,
+  "RUN_NAMES": [
+    "p_23_dmlp_512_ReLU_random_scale_0.1_decay_2.0_08180102",
+    "p_23_dmlp_512_Quad_random_scale_0.1_decay_0_08151413",
+    "p_23_dmlp_512_Quad_single-freq_scale_0.02_decay_0_08151819",
+    "p_23_dmlp_512_ReLU_random_scale_0.01_decay_0_08151859",
+    "p_23_dmlp_512_ReLU_random_scale_0.1_decay_0_08142058",
+    "p_23_dmlp_512_ReLU_random_scale_0.1_decay_0_11122351",
+    "p_23_dmlp_512_ReLU_single-freq_scale_0.002_decay_0_08151833"
+  ],
+  "CHECKPOINT_SELECTION_MODE": "all",
+  "EARLY_EPOCHS": [
+    0,
+    200,
+    400,
+    600,
+    800,
+    1000
+  ],
+  "LATER_EVERY": 1000,
+  "INCLUDE_FINAL": true,
+  "GROKKING_THRESHOLD": 0.95,
+  "DEVICE": "cpu",
+  "EPS": 1e-12,
+  "COORDINATE_PRIMARY_MODE": "decoded",
+  "COMPARE_COORDINATE_MODES": [
+    "decoded",
+    "raw"
+  ],
+  "TRAIN_ACC_SATURATION": 0.999,
+  "MIN_POST_SAT_EPOCH": 2000,
+  "DELTA_TRANSITION_HALF_WINDOW": 3000,
+  "BLOCK_PERM_BLOCK_SIZE": 4,
+  "BLOCK_PERM_N": 1000,
+  "RANDOM_SEED": 0,
+  "ACCURACY_VALIDATION_EPOCHS": null
+}
