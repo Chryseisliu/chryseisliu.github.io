@@ -560,7 +560,7 @@ body {
     padding: 100px 80px;
     min-height: 100vh;
     background: #fff;
-    overflow-x: hidden;
+    overflow-x: visible;
 }
 
 .blog-post-content {
@@ -579,7 +579,7 @@ body {
 /* Fix overflow issues */
 .blog-post-body {
     max-width: 100%;
-    overflow-x: hidden;
+    overflow-x: visible;
 }
 
 /* MathJax overflow fix */
@@ -987,8 +987,8 @@ img[loading="lazy"] {
 /* Responsive image grids */
 @media (max-width: 768px) {
     .blog-post-section {
-        padding: 60px 20px !important;
-        overflow-x: hidden;
+        padding: 60px 16px !important;
+        overflow-x: visible;
     }
 
     .blog-post-with-toc {
@@ -1079,10 +1079,10 @@ img[loading="lazy"] {
         gap: 15px;
     }
 
-    /* Force all elements to not exceed viewport width */
-    * {
-        max-width: 100vw !important;
-        box-sizing: border-box !important;
+    .blog-post-with-toc article,
+    .blog-post-body,
+    .blog-post-body > * {
+        max-width: 100%;
     }
 }
 
@@ -1168,7 +1168,7 @@ img[loading="lazy"] {
 
     .collection-page-section,
     .blog-post-section {
-        padding: 60px 30px;
+        padding: 60px 20px;
     }
 
     .blog-post-body {
@@ -1276,7 +1276,7 @@ img[loading="lazy"] {
 
     .collection-page-section,
     .blog-post-section {
-        padding: 40px 15px;
+        padding: 44px 14px;
         min-height: auto;
     }
 
