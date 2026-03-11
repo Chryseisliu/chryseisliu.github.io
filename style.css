@@ -185,6 +185,21 @@ body {
     line-height: 1.8;
 }
 
+.description-now {
+    margin-top: 22px;
+    padding-left: 16px;
+    border-left: 1px solid #d7d7d7;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #4b4b4b;
+}
+
+.description-now-label {
+    display: inline;
+    color: #1d4ed8;
+    font-style: italic;
+}
+
 /* Blog Section */
 .blog-section {
     padding: 100px 80px;
@@ -1131,6 +1146,12 @@ img[loading="lazy"] {
         font-size: 16px;
     }
 
+    .description-now {
+        font-size: 14px;
+        margin-top: 18px;
+        padding-left: 14px;
+    }
+
     .contact-sidebar {
         right: 20px;
         gap: 15px;
@@ -1210,6 +1231,13 @@ img[loading="lazy"] {
 
     .description {
         font-size: 15px;
+    }
+
+    .description-now {
+        font-size: 13px;
+        line-height: 1.75;
+        margin-top: 16px;
+        padding-left: 12px;
     }
 
     .contact-sidebar {
