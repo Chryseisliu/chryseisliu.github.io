@@ -187,17 +187,23 @@ body {
 
 .description-now {
     margin-top: 22px;
-    padding-left: 16px;
-    border-left: 1px solid #d7d7d7;
+    padding-left: 14px;
+    border-left: 1px solid #dddddd;
     font-size: 15px;
     line-height: 1.8;
-    color: #4b4b4b;
+    color: #5a5a5a;
 }
 
 .description-now-label {
     display: inline;
-    color: #1d4ed8;
     font-style: italic;
+    color: #3f3f3f;
+}
+
+.description-now-date {
+    color: #8a8a8a;
+    font-style: normal;
+    letter-spacing: 0.01em;
 }
 
 /* Blog Section */

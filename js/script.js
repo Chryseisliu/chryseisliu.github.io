@@ -1,6 +1,17 @@
 // Simple navigation functionality
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.nav-link');
+    const descriptionNowDate = document.getElementById('description-now-date');
+
+    if (descriptionNowDate) {
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        descriptionNowDate.textContent = `(${formattedDate})`;
+    }
 
     // Smooth scroll for navigation links
     function smoothScroll(e) {
