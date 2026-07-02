@@ -327,6 +327,11 @@ body {
     transform: translateY(-4px);
 }
 
+.collection-item:focus-visible {
+    outline: 2px solid #000;
+    outline-offset: 4px;
+}
+
 .collection-preview {
     position: relative;
     width: 100%;
@@ -832,12 +837,6 @@ mjx-container {
 
 .back-link:hover {
     opacity: 0.6;
-}
-
-/* Image optimization for faster loading */
-img {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
 }
 
 /* Reading Time */

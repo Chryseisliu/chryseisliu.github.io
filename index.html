@@ -7,7 +7,7 @@
     <meta name="description" content="Personal website of Chryseis Liu">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="style.css?v=2.0">
+    <link rel="stylesheet" href="style.css?v=2.1">
 
     <!-- Favicon -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
@@ -53,7 +53,17 @@
         <section id="home" class="home-section">
             <div class="main-content">
                 <div class="profile-image">
-                    <img src="images/2025yearreview/IMG_9476.jpeg" alt="Chryseis Liu" class="profile-img" loading="eager">
+                    <img
+                        src="images/optimized/thumbs/2025yearreview/IMG_9476.jpeg"
+                        srcset="images/optimized/thumbs/2025yearreview/IMG_9476.jpeg 480w, images/optimized/medium/2025yearreview/IMG_9476.jpeg 1600w"
+                        sizes="(max-width: 768px) 70vw, 350px"
+                        alt="Chryseis Liu"
+                        class="profile-img"
+                        loading="eager"
+                        decoding="async"
+                        fetchpriority="high"
+                        width="350"
+                        height="450">
                 </div>
                 
                 <div class="content-wrapper">
@@ -113,6 +123,7 @@
 
     <!-- JavaScript -->
     <script src="js/automata.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script.js?v=2.1"></script>
+    <script src="js/gallery.js?v=1.0"></script>
 </body>
 </html>
