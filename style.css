@@ -705,6 +705,56 @@ mjx-container {
     max-width: none;
 }
 
+/* Long-form essay rhythm: paragraph gaps stay tighter than section gaps. */
+.blog-post-body.essay-prose p {
+    margin-bottom: 20px;
+}
+
+.essay-prose > .blog-section-block {
+    margin-top: 52px;
+}
+
+.essay-prose .blog-section-block > p:last-child {
+    margin-bottom: 0;
+}
+
+.essay-figure {
+    margin: 32px 0 0;
+}
+
+.essay-figure + p {
+    margin-top: 32px;
+}
+
+.essay-figure-frame {
+    border: 1px solid #dedede;
+    background: #fafafa;
+    padding: 24px;
+}
+
+.essay-figure-frame-flatland {
+    padding: 30px 26px;
+}
+
+.essay-figure img,
+.essay-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.essay-figure figcaption {
+    margin-top: 11px;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.essay-figure figcaption a {
+    color: inherit;
+    text-underline-offset: 2px;
+}
+
 .blog-section-block {
     scroll-margin-top: 96px;
 }
@@ -1036,6 +1086,27 @@ img[loading="lazy"] {
 
     .blog-section-block h3 {
         font-size: 18px;
+    }
+
+    .blog-post-body.essay-prose p {
+        margin-bottom: 18px;
+    }
+
+    .essay-prose > .blog-section-block {
+        margin-top: 44px;
+    }
+
+    .essay-figure {
+        margin-top: 26px;
+    }
+
+    .essay-figure + p {
+        margin-top: 26px;
+    }
+
+    .essay-figure-frame,
+    .essay-figure-frame-flatland {
+        padding: 14px;
     }
 
     .blog-table th,
