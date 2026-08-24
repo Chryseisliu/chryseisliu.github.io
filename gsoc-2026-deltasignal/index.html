@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Chryseis Xinyi Liu's Google Summer of Code 2026 work product for DeltaSignal and Reactome pathway perturbation analysis.">
+  <title>GSoC 2026 DeltaSignal work product | Chryseis Liu</title>
+  <link rel="stylesheet" href="report.css">
+</head>
+<body>
+  <header class="page-header">
+    <a href="/">Chryseis Liu</a> / Google Summer of Code 2026 work product
+  </header>
+  <main>
+    <aside class="submission-note">
+      <strong>Final work product</strong>
+      This page is the public index for the code, evaluation results, figures, documentation, upstream status, and next steps completed during GSoC 2026.
+    </aside>
+    <article><h1>Evaluating DeltaSignal and bringing perturbation predictions into Reactome</h1>
+<ul>
+<li><strong>GSoC 2026 project:</strong> Improvement of MPBioPath for Reactome Scale
+Perturbation Analysis</li>
+<li><strong>Contributor:</strong> Chryseis Xinyi Liu</li>
+<li><strong>Organization:</strong> Open Genome Informatics / Reactome</li>
+<li><strong>Mentor:</strong> Adam Wright</li>
+</ul>
+<h2>What I built</h2>
+<p>My goal was to make DeltaSignal easier to evaluate and easier to use without
+hiding the limitations of the current model. The work has three connected
+parts:</p>
+<ol>
+<li>an auditable perturbation benchmark for DeltaSignal itself;</li>
+<li>an external TCGA LUAD analysis that asks whether its pathway scores contain
+clinically useful information; and</li>
+<li>a Reactome Pathway Browser prototype for running and visualizing a
+perturbation interactively.</li>
+</ol>
+<p>These parts share the same software stack, but they answer different
+questions. The perturbation benchmark is the direct accuracy test. TCGA is an
+observational application and control experiment. The browser work is a user
+interface. Keeping those claims separate is one of the main conclusions of the
+project.</p>
+<h2>Code and upstream status</h2>
+<p>The work is split across three upstream Reactome repositories. This report is
+the index for the complete work product; the pull requests remain the best
+place to inspect individual code changes and reviews.</p>
+<p>At the time of final submission, the upstream DeltaSignal repository is
+private. Its PR numbers, merge states, methods, results, and reproduction
+commands are recorded here, but its code links are visible only to Reactome
+maintainers. The LNG and WebsiteAngular contributions linked below are public.</p>
+<table>
+<thead>
+<tr>
+<th>Repository</th>
+<th>Contribution</th>
+<th>Upstream status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DeltaSignal</td>
+<td>PR #1: initial TCGA pipeline and preservation of LNG <code>edge_type</code></td>
+<td>Merged in private upstream</td>
+</tr>
+<tr>
+<td>Logic Network Generator</td>
+<td><a href="https://github.com/reactome/logic-network-generator/pull/38">PR #38: stop stringified null identifiers entering UUID mappings</a></td>
+<td>Merged</td>
+</tr>
+<tr>
+<td>Logic Network Generator</td>
+<td><a href="https://github.com/reactome/logic-network-generator/pull/51">PR #51: correct Reactome release-version sentinel handling</a></td>
+<td>Merged</td>
+</tr>
+<tr>
+<td>DeltaSignal</td>
+<td>PR #10: reproducible frozen-network and current-stack benchmarks</td>
+<td>Merged in private upstream</td>
+</tr>
+<tr>
+<td>DeltaSignal</td>
+<td>PR #11: held-out ten-pathway evaluation, TCGA matched-expression control, reports, and figures</td>
+<td>Open in private upstream</td>
+</tr>
+<tr>
+<td>WebsiteAngular</td>
+<td><a href="https://github.com/reactome/WebsiteAngular/pull/155">PR #155: interactive DeltaSignal perturbation UI and logic-network visualization</a></td>
+<td>Open for review</td>
+</tr>
+</tbody></table>
+<p>The final functional GSoC checkpoints on the two open branches are DeltaSignal
+commit <code>e0ec076</code> and WebsiteAngular commit
+<a href="https://github.com/reactome/WebsiteAngular/commit/d20ccc2afa0d939937b8465ba99ee0e04fd8a7f7"><code>d20ccc2</code></a>.
+Later review or maintenance work can continue on those branches without making
+the submitted work-product boundary ambiguous.</p>
+<h2>The stack</h2>
+<p>DeltaSignal does not start from a gene list alone. Its input network is built
+from Reactome in two stages:</p>
+<pre><code class="language-text">Reactome pathway
+      |
+      v
+Logic Network Generator (LNG)
+      |
+      | logic_network.csv
+      | stid_to_uuid_mapping.csv
+      v
+DeltaSignal steady-state solver
+      |
+      +--&gt; perturbation benchmark
+      +--&gt; TCGA pathway scores
+      +--&gt; Reactome Pathway Browser overlay
+</code></pre>
+<p>LNG expands a Reactome pathway into the logic graph that DeltaSignal solves.
+A physical entity can appear in several positions or logical contexts, so one
+Reactome stable identifier can map to several LNG UUIDs. Reactions, complexes,
+sets, activating and inhibiting edges, and AND/OR relationships are represented
+in this generated graph.</p>
+<p>DeltaSignal takes observations on one or more UUIDs and propagates them to a
+steady state. The result contains a predicted activity and influence score for
+each logic node, plus convergence information. A model result therefore
+depends on both components:</p>
+<pre><code class="language-text">prediction = DeltaSignal propagation(LNG network, perturbation)
+</code></pre>
+<p>This matters for attribution. Regenerating the network can change nodes,
+edges, signs, mappings, and positional instances even when the DeltaSignal code
+is unchanged. A gain after updating both repositories is an end-to-end gain,
+not automatically an improvement to the DeltaSignal algorithm.</p>
+<h2>Part 1: perturbation accuracy</h2>
+<h3>The question</h3>
+<p>The primary evaluation asks a direct causal question:</p>
+<blockquote>
+<p>When an experiment increases, decreases, or removes an input, does
+DeltaSignal predict the observed direction of the downstream readout?</p>
+</blockquote>
+<p>This is the best available test of the behavior DeltaSignal is intended to
+model. It should not be replaced by survival association, clustering, or how
+plausible an overlay looks.</p>
+<h3>Cases and held-out design</h3>
+<p>I used the experimentally supported cases from the MP-BioPath supplementary
+workbook. The complete panel contains 847 input, output, and outcome cases from
+ten Reactome pathways.</p>
+<p>Three pathways were used while developing and checking the harness:</p>
+<ul>
+<li>PIP3 activates AKT signaling;</li>
+<li>Mitotic G1 phase and G1/S transition;</li>
+<li>Cell Cycle Checkpoints.</li>
+</ul>
+<p>The other seven pathways were kept as a held-out test set:</p>
+<ul>
+<li>Mitotic Prophase;</li>
+<li>S Phase;</li>
+<li>Signaling by WNT;</li>
+<li>Signaling by ERBB2;</li>
+<li>Transcriptional Regulation by TP53;</li>
+<li>RAF/MAP kinase cascade;</li>
+<li>HDR through HRR or SSA.</li>
+</ul>
+<p>The split is fixed in <code>bench/mpbiopath_ten_pathways.tsv</code>. It should not be
+changed after seeing held-out results.</p>
+<h3>What counts as a scored case</h3>
+<p>The primary endpoint is the exact requested key-output entity. If the
+perturbation input or output cannot be mapped into the generated network, the
+case is recorded as unscored with an exact reason. It is never silently treated
+as an unchanged prediction.</p>
+<p>LNG can export an adjacent reaction as a possible readout when the exact entity
+is missing. These reaction proxies were disabled for the primary result. A
+reaction can be a useful diagnostic fallback, but substituting it changes the
+biological question. Mixing exact entities and proxies without reporting the
+difference would make coverage look better at the cost of a less clear
+endpoint.</p>
+<h3>Frozen inputs and recorded provenance</h3>
+<p>The formal run used:</p>
+<ul>
+<li>Reactome release 97;</li>
+<li>LNG commit <code>7aca90d03307e53135799a20c2aec75552bec1ba</code>;</li>
+<li>DeltaSignal/report commit
+<code>59e1757697300af6e9c90e062c0b32195f7204a7</code>;</li>
+<li>current propagation with SCC solving;</li>
+<li>stoichiometric weighting disabled;</li>
+<li>separate frozen catalogs with diagram edges enabled and disabled.</li>
+</ul>
+<p>The harness records Git state, effective <code>DS_*</code> settings, thresholds, input
+hashes, network hashes, one row per case, and the complete solver log. It caches
+one solve per perturbation because one perturbation can have several evaluated
+outputs.</p>
+<h3>Main result</h3>
+<p><img src="images/gsoc-2026/perturbation-scorecard.svg" alt="Overall perturbation scorecard"></p>
+<table>
+<thead>
+<tr>
+<th>Result</th>
+<th align="right">Diagram edges on</th>
+<th align="right">Diagram edges off</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Eligible experimental cases</td>
+<td align="right">847</td>
+<td align="right">847</td>
+</tr>
+<tr>
+<td>Exact-output cases scored</td>
+<td align="right">627</td>
+<td align="right">627</td>
+</tr>
+<tr>
+<td>Correct scored cases</td>
+<td align="right">456</td>
+<td align="right">444</td>
+</tr>
+<tr>
+<td>Scored-case accuracy</td>
+<td align="right">72.7%</td>
+<td align="right">70.8%</td>
+</tr>
+<tr>
+<td>Coverage-adjusted accuracy</td>
+<td align="right">53.8%</td>
+<td align="right">52.4%</td>
+</tr>
+<tr>
+<td>Held-out correct / scored</td>
+<td align="right">289/404</td>
+<td align="right">280/404</td>
+</tr>
+<tr>
+<td>Held-out accuracy</td>
+<td align="right">71.5%</td>
+<td align="right">69.3%</td>
+</tr>
+</tbody></table>
+<p>DeltaSignal scored 627 of 847 cases, which is 74.0% exact-output coverage. With
+diagram edges enabled, it was correct on 456 of those 627 cases. With diagram
+edges disabled, it was correct on 444.</p>
+<p>Across the 627 paired cases, enabling diagram edges changed 25
+classifications. Sixteen changed from wrong to correct and four changed from
+correct to wrong. The exact paired McNemar p-value was 0.01182. On the seven
+held-out pathways, diagram edges produced a net gain of nine correct cases.</p>
+<p>This is useful evidence that Reactome diagram topology contributes predictive
+signal under the fixed solver. It is not evidence that a DeltaSignal internal
+change caused the gain because the ablation changes the LNG-generated graph.</p>
+<h3>Pathway-level behavior</h3>
+<p><img src="images/gsoc-2026/pathway-accuracy.svg" alt="Pathway-level perturbation accuracy"></p>
+<p>The average hides substantial pathway variation. PIP3/AKT was nearly perfect
+on the scored subset, while Mitotic G1/G1-S was close to chance. Diagram edges
+helped Mitotic G1/G1-S and TP53, slightly hurt Cell Cycle Checkpoints, and made
+no classification difference in several other pathways.</p>
+<p>That unevenness is important. It argues against describing one aggregate
+accuracy as a universal property of the model. Graph structure, mapping
+coverage, feedback loops, and the kind of requested readout all vary by
+pathway.</p>
+<h3>Comparator context</h3>
+<p>On exactly the 627 cases DeltaSignal could score:</p>
+<ul>
+<li>DeltaSignal was correct on 456/627, or 72.7%;</li>
+<li>MP-BioPath was correct on 452/627, or 72.1%;</li>
+<li>curator predictions were correct on 481/627, or 76.7%.</li>
+</ul>
+<p>The paired bootstrap interval for DeltaSignal minus MP-BioPath was -2.7 to
++3.5 percentage points. This supports approximate parity on the mapped subset.
+It does not establish a DeltaSignal win.</p>
+<p>MP-BioPath and the curator table cover all 847 eligible cases, while
+DeltaSignal&#39;s exact-output coverage is 627. Counting correct DeltaSignal cases
+over all eligible cases gives 53.8% coverage-adjusted accuracy. Both the paired
+accuracy and coverage-adjusted number are needed: one describes classification
+where the current stack can answer, and the other describes the complete
+end-to-end system.</p>
+<h3>Coverage failures</h3>
+<p>The 220 unscored cases were classified as:</p>
+<ul>
+<li>192 exact outputs missing while an explicit reaction proxy was available;</li>
+<li>25 gene database identifiers present in Reactome but not exported in the LNG
+network;</li>
+<li>3 key outputs absent from the Reactome release used for the run.</li>
+</ul>
+<p>These are different problems. The first is an endpoint-definition decision,
+the second is an LNG export or pathway-boundary problem, and the third is a
+release-content limitation. Keeping them separate shows where improvements
+would actually have to happen.</p>
+<h3>Convergence finding</h3>
+<p>The diagram-on run marked 133 scored cases as non-converged, but those rows came
+from only 9 of 171 unique perturbation solves. A single solve is repeated when
+the workbook evaluates several outputs for that perturbation.</p>
+<p>All of these failures occurred in Transcriptional Regulation by TP53. Accuracy
+among converged diagram-on cases was 340/494, or 68.8%. The non-converged cases
+were correct on 116/133, or 87.2%. The high aggregate accuracy is therefore
+partly supported by outputs that did not satisfy the numerical convergence
+criterion.</p>
+<p>I kept those rows as diagnostic results, but they should not be presented as
+equally reliable predictions. The immediate solver task is to reproduce and
+characterize the nine unique TP53 failures rather than treating 133 repeated
+case rows as 133 independent failures.</p>
+<h3>Reproduce the benchmark</h3>
+<p>Install the workbook dependencies:</p>
+<pre><code class="language-sh">python -m pip install -r bench/requirements.txt
+</code></pre>
+<p>Run the empirical cases against a generated catalog:</p>
+<pre><code class="language-sh">python bench/benchmark_mpbiopath_cases.py \
+  --supplementary-workbook /path/to/SupplementaryTables.xlsx \
+  --id-map /path/to/db_id_to_name_mapping.txt \
+  --catalog /path/to/lng/output \
+  --ground-truth experimental \
+  --output-dir /path/to/benchmark-output
+</code></pre>
+<p>For the topology ablation, provide separately generated diagram-on and
+diagram-off catalogs:</p>
+<pre><code class="language-sh">python bench/run_mpbiopath_factorial.py \
+  --catalog release97_diagram_on=/path/to/catalog-diagram-on \
+  --catalog release97_diagram_off=/path/to/catalog-diagram-off \
+  --supplementary-workbook /path/to/SupplementaryTables.xlsx \
+  --id-map /path/to/db_id_to_name_mapping.txt \
+  --reactome-id-audit /path/to/reactome_id_audit.tsv \
+  --output-dir /path/to/factorial-output
+</code></pre>
+<p>Generate the scorecard only after the current-SCC runs finish:</p>
+<pre><code class="language-sh">python bench/generate_evaluation_report.py \
+  --diagram-on-dir /path/to/v97-diagram-on-current-scc \
+  --diagram-off-dir /path/to/v97-diagram-off-current-scc \
+  --tcga-readiness /path/to/readiness_key_findings.tsv \
+  --output-dir /path/to/evaluation-report
+</code></pre>
+<p>The benchmark details, failure codes, and frozen-network versus current-stack
+distinction are documented in the DeltaSignal PR #11 work product.</p>
+<h2>Part 2: TCGA LUAD external validation</h2>
+<h3>The question</h3>
+<p>The TCGA analysis asks whether patient-specific DeltaSignal pathway scores are
+associated with lung adenocarcinoma survival. It does not provide known pathway
+perturbations and known downstream responses, so it cannot directly measure
+causal perturbation accuracy.</p>
+<p>This distinction became especially important after the first Cell Cycle
+Checkpoint result looked strong. A clinically associated score can still be a
+re-expression of the RNA measurements that were used as its inputs.</p>
+<h3>Data and pathway scores</h3>
+<p>The historical demonstration contains 502 TCGA LUAD tumors. For each tumor,
+RNA-seq expression was mapped to observable LNG root nodes. Expression was
+converted to a cohort-relative 0 to 100 percentile activity, DeltaSignal was
+solved, and terminal node activity was summarized into one score per pathway.</p>
+<p>The three pathways were PIP3/AKT, Mitotic G1/G1-S, and Cell Cycle Checkpoints.
+The initial median-split result for Cell Cycle Checkpoints was strongly
+associated with survival. That result showed that the pipeline ran end to end
+and found a biologically plausible proliferation signal. It did not yet show
+that network propagation added information.</p>
+<h3>What matched expression means</h3>
+<p>I built a control from the exact genes available to DeltaSignal as inputs for
+each pathway:</p>
+<ol>
+<li>collect the unique mapped input genes;</li>
+<li>rank each gene&#39;s expression from 0 to 100 across the same tumors;</li>
+<li>average those percentile values for each patient.</li>
+</ol>
+<p>The result is a simple expression-only score with the same starting molecular
+information but no pathway edges, gates, feedback loops, or steady-state
+solver.</p>
+<p>Using unique genes is essential. LNG can create many position-aware UUIDs for
+one gene. Averaging UUIDs would give duplicated graph contexts extra weight and
+would no longer be a fair expression baseline.</p>
+<h3>Clinical models</h3>
+<p>The follow-up analysis used 471 complete cases with 168 deaths. It tested
+continuous scores and adjusted for age, sex, pathologic stage, and smoking
+history. It also used repeated 5-fold cross-validation over 20 seeded repeats.</p>
+<p>The key comparison was held-out concordance for four models:</p>
+<ul>
+<li>clinical covariates only;</li>
+<li>clinical plus DeltaSignal;</li>
+<li>clinical plus matched expression;</li>
+<li>clinical plus both DeltaSignal and matched expression.</li>
+</ul>
+<p>The concordance index asks how often the model correctly orders the survival
+risk of two comparable patients. A value near 0.5 is no better than random
+ordering. Higher is better. Cross-validation matters because in-sample fit can
+improve even when a new predictor does not generalize.</p>
+<h3>Result</h3>
+<p><img src="images/gsoc-2026/tcga-cv-concordance.png" alt="Repeated cross-validated concordance"></p>
+<table>
+<thead>
+<tr>
+<th>Pathway</th>
+<th align="right">DS/expression Spearman rho</th>
+<th align="right">Clinical</th>
+<th align="right">+ DeltaSignal</th>
+<th align="right">+ expression</th>
+<th align="right">+ both</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PIP3/AKT</td>
+<td align="right">0.687</td>
+<td align="right">0.653</td>
+<td align="right">0.654</td>
+<td align="right">0.650</td>
+<td align="right">0.648</td>
+</tr>
+<tr>
+<td>Mitotic G1/G1-S</td>
+<td align="right">0.960</td>
+<td align="right">0.653</td>
+<td align="right">0.668</td>
+<td align="right">0.673</td>
+<td align="right">0.671</td>
+</tr>
+<tr>
+<td>Cell Cycle Checkpoints</td>
+<td align="right">0.949</td>
+<td align="right">0.653</td>
+<td align="right">0.679</td>
+<td align="right">0.678</td>
+<td align="right">0.676</td>
+</tr>
+</tbody></table>
+<p><img src="images/gsoc-2026/tcga-expression-comparison.png" alt="DeltaSignal compared with matched expression"></p>
+<p>For the two cell-cycle pathways, DeltaSignal and matched expression were almost
+the same ranking of patients. Cell Cycle Checkpoints had Spearman rho 0.949 and
+Mitotic G1/G1-S had rho 0.960. Their cross-validated concordance values were
+also nearly identical.</p>
+<p>Cell Cycle Checkpoints retained a nominal DeltaSignal coefficient after
+adjustment for clinical covariates and matched expression: hazard ratio 1.620,
+95% CI 1.014 to 2.589, p=0.0437. The three-pathway false-discovery-rate value
+was 0.131. The nested likelihood-ratio p-value for adding DeltaSignal was
+0.0397, but adding both scores did not improve held-out concordance over
+expression alone.</p>
+<p><img src="images/gsoc-2026/tcga-adjusted-forest.png" alt="Adjusted DeltaSignal hazard ratios"></p>
+<h3>What the TCGA result supports</h3>
+<p>The historical Cell Cycle Checkpoint score captures clinically relevant
+cell-cycle variation. DeltaSignal also avoids destroying that signal: its
+cross-validated result is close to the matched expression control.</p>
+<p>The analysis does not establish incremental predictive value from network
+propagation. The simplest explanation is that highly proliferative tumors
+already have a strong cell-cycle expression signature, and the deterministic
+network mostly preserves that ordering. The static graph does not add enough
+independent information to improve survival discrimination in this test.</p>
+<p>This is a useful negative result because it defines the next modeling target.
+Any learned weights or dynamic model should be compared against matched
+expression, not only against clinical covariates or a shuffled-label null. If a
+future method cannot beat the same-input expression baseline on held-out data,
+its extra mechanistic complexity has not yet earned a predictive claim.</p>
+<h3>Reproduce the TCGA analysis</h3>
+<p>The full data preparation and scoring contract is in the DeltaSignal PR #11
+work product.</p>
+<p>After a score table has been generated, run the matched-expression and clinical
+utility analysis with:</p>
+<pre><code class="language-sh">python validation/tcga_luad/scripts/analyze_clinical_utility.py \
+  --activity-tsv /path/to/run/tables/sample_pathway_activity.tsv \
+  --clinical-tsv /path/to/TCGA.LUAD.clinicalMatrix.tsv \
+  --expression-tsv /path/to/TCGA.LUAD.expression.tsv \
+  --root-audit-tsv /path/to/root_observability_audit.tsv \
+  --output-dir /path/to/clinical-utility-output
+</code></pre>
+<p>The historical result is configuration-specific. It must not be relabeled as a
+current LNG or DeltaSignal run without regenerating the networks and scores.</p>
+<h2>Part 3: Reactome perturbation interface</h2>
+<h3>Why add the interface</h3>
+<p>The benchmark produces tables, but it is difficult to understand one
+prediction from a case row alone. The Reactome prototype makes the model
+inspectable at the level where a pathway researcher already works.</p>
+<p>A user can select a molecule on a Reactome diagram, set it to knockout,
+baseline, or activation, run the DeltaSignal API, and inspect the predicted
+response without preparing observations by hand.</p>
+<h3>Reactome diagram view</h3>
+<p><img src="images/gsoc-2026/reactome-diagram-overlay.png" alt="DeltaSignal overlay beside the Reactome diagram"></p>
+<p>The DeltaSignal controls open as a side drawer so that the original pathway
+remains visible and interactive. The workflow is:</p>
+<ol>
+<li>open a pathway with a generated LNG network;</li>
+<li>choose <strong>Perturb</strong>;</li>
+<li>select a physical entity on the diagram;</li>
+<li>set its activity and add the perturbation;</li>
+<li>add more inputs if needed;</li>
+<li>run DeltaSignal;</li>
+<li>check convergence and inspect the response.</li>
+</ol>
+<p>Blue diagram elements are predicted below their own baseline, near-white
+elements changed little, and red elements are above baseline. If one Reactome
+stable identifier maps to several LNG UUIDs, all values are retained and shown
+as a gradient rather than silently choosing one value.</p>
+<p>The result table is grouped by Reactome stable identifier for readability. It
+shows mean activity and change across member UUIDs and the maximum influence
+score. The diagram and the new logic view still preserve the individual UUID
+results.</p>
+<h3>Logic nodes and edges view</h3>
+<p><img src="images/gsoc-2026/logic-nodes-and-edges.png" alt="Top UUID-level logic responses"></p>
+<p>Adam suggested a raw nodes-and-edges view as the practical starting point for
+showing what LNG produced. This view keeps the 40 UUID-level nodes with the
+largest absolute changes, plus every perturbed input. It draws an edge only if
+both endpoints are visible.</p>
+<p>Each shape is one exact LNG UUID:</p>
+<ul>
+<li>colour shows change from baseline;</li>
+<li>size shows absolute influence;</li>
+<li>an amber border marks a perturbed input;</li>
+<li>node shape distinguishes reactions, complexes or sets, and sequence
+entities;</li>
+<li>edge colour distinguishes positive and negative effects;</li>
+<li>solid and dashed edges distinguish AND and OR relationships.</li>
+</ul>
+<p>Selecting a node shows its Reactome stable identifier, UUID, entity type,
+baseline, predicted activity, change, influence, and the number of UUIDs that
+share its stable identifier. This provides a direct audit of the mapping layer
+that was previously visible only in CSV files.</p>
+<p>The implementation is on the <code>feat/deltasignal-ui</code> branch of
+<code>reactome/WebsiteAngular</code>. Detailed setup, API behavior, legend definitions,
+and verification steps are in
+<code>documentation/PathwayBrowser/deltasignal.md</code> in that repository.</p>
+<h3>What is not in the interface yet</h3>
+<p>The prototype solves one generated pathway at a time. It does not yet join
+several pathway networks or calculate an activity for every ReacFoam region.</p>
+<p>A ReacFoam view could become useful for moving from a whole-system overview to
+one pathway, but it needs two modeling decisions first:</p>
+<ol>
+<li>how to aggregate many node activities into one pathway-region score; and</li>
+<li>how to handle cross-pathway connections and pathways missing from the
+generated catalog.</li>
+</ol>
+<p>The meeting discussed ReacFoam as a possibility, not as a finished model
+contract. I implemented the exact nodes-and-edges view first because it uses the
+graph DeltaSignal already returns and does not invent a new pathway summary.</p>
+<h2>Challenges and lessons</h2>
+<p>The most time-consuming problems were often at the boundaries between tools,
+not inside one solver function. LNG mappings are position-aware rather than
+one-to-one, missing database identifiers can mean several different things,
+and changing the Reactome or LNG release can change a prediction before
+DeltaSignal itself runs. The stringified-null and release-sentinel fixes came
+from tracing those boundaries rather than skipping malformed rows.</p>
+<p>I also learned that evaluation scope changes the apparent conclusion. A paired
+comparison on mapped cases can show approximate parity while the complete
+system still has limited coverage. Likewise, 133 non-converged case rows can
+come from only nine unique solves. Both views are true, but only if the
+denominator and unit of analysis are stated.</p>
+<p>Finally, a biologically plausible clinical association is not enough to show
+that network propagation adds value. The matched-expression control changed
+the interpretation of the TCGA result. It showed why every future omics
+application should include a baseline built from the same measured inputs.</p>
+<h2>What I would do next</h2>
+<p>The evaluation points to a short list of concrete next steps:</p>
+<ol>
+<li>Reproduce the nine unique TP53 non-convergent solves and add a convergence
+regression set.</li>
+<li>Resolve the 25 Reactome-present but LNG-unexported outputs and report any
+resulting coverage gain separately from accuracy.</li>
+<li>Define a curated output policy for the 192 proxy-available cases rather than
+mixing entity and reaction endpoints after seeing outcomes.</li>
+<li>Add an external interventional dataset beyond the MP-BioPath workbook.</li>
+<li>Treat matched expression as a mandatory baseline for every observational
+omics application.</li>
+<li>Evaluate learned edge or Hill-curve parameters with strict held-out splits.</li>
+<li>Consider temporal or ODE-based models only where time-resolved data can
+identify the extra parameters.</li>
+</ol>
+<p>The current deterministic model is a useful mechanistic baseline. Its paired
+perturbation accuracy is approximately comparable with MP-BioPath where exact
+readouts are available, and Reactome diagram topology provides a measurable
+gain. The remaining limits are also clear: incomplete readout coverage,
+pathway-specific numerical failures, and little incremental TCGA survival
+signal beyond matched expression. Those limits provide a more useful roadmap
+than a single headline accuracy number.</p>
+</article>
+    <footer class="page-footer">
+      <a href="work-product.md">View the Markdown source</a> · Published August 23, 2026
+    </footer>
+  </main>
+</body>
+</html>
