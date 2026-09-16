@@ -28,7 +28,8 @@ body {
 #automata-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
 .life-invitation { display: flex; align-items: flex-start; gap: 13px; margin-top: 24px; padding: 10px 0; text-align: left; }
 .life-title { color: #0066ff; font-size: 12px; margin: 0; }
-.life-belief { margin-top: 24px; font-size: 15px; letter-spacing: .01em; color: #333; }
+.life-belief, .writing-title-list { font-size: 15px; }
+.life-belief { margin-top: 24px; letter-spacing: .01em; color: #333; }
 #life-pattern-source { color: #888; font-size: 10px; text-underline-offset: 3px; }
 .life-hint { color: #888; font-size: 11px; margin-top: 4px; }
 .life-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
@@ -46,7 +47,7 @@ body {
 .glider-glyph i:nth-child(5) { left: 18px; top: 18px; }
 
 /* A compact title-only list; the archive retains descriptions and dates. */
-.writing-title-list { list-style: none; display: grid; gap: 12px; font-size: 13px; }
+.writing-title-list { list-style: none; display: grid; gap: 12px; }
 .writing-title-list a, .blog-title a { color: inherit; text-decoration: none; }
 .writing-title-list a { font-size: inherit; text-decoration: underline; text-decoration-color: #d5d5d5; text-underline-offset: 4px; }
 .writing-title-list a:hover, .blog-title a:hover { color: #0066ff; }
@@ -62,11 +63,9 @@ body {
 .site-footer a:hover { color: #0066ff; }
 @media (max-width: 768px) {
     #blogs { padding-left: 40px; padding-right: 40px; }
-    .writing-title-list { font-size: 12px; }
 }
 @media (max-width: 480px) {
     #blogs { padding-left: 20px; padding-right: 20px; }
-    .writing-title-list { font-size: 11px; }
 }
 
 /* Contact Sidebar */
