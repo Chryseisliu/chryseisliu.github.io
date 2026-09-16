@@ -29,7 +29,7 @@ body {
 .life-invitation { display: flex; align-items: flex-start; gap: 13px; margin-top: 24px; padding: 10px 0; text-align: left; }
 .life-title { color: #0066ff; font-size: 12px; margin: 0; }
 .life-belief, .writing-title-list { font-size: 15px; }
-.life-belief { margin-top: 24px; letter-spacing: .01em; color: #333; }
+.life-belief { margin-top: 14px; letter-spacing: .01em; color: #333; }
 #life-pattern-source { color: #888; font-size: 10px; text-underline-offset: 3px; }
 .life-hint { color: #888; font-size: 11px; margin-top: 4px; }
 .life-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
