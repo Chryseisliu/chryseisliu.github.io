@@ -23,77 +23,50 @@ body {
     overflow-x: hidden;
 }
 
-/* Cellular Automata Canvas */
-#automata-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-}
+/* Original viewport-wide Life canvas, with no masks over text or photographs. */
+#home { min-height: 85vh; padding-bottom: 20px; }
+#automata-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
+.life-invitation { display: flex; align-items: flex-start; gap: 13px; margin-top: 24px; padding: 10px 0; text-align: left; }
+.life-title { color: #0066ff; font-size: 12px; margin: 0; }
+.life-belief { margin-top: 24px; font-size: 15px; letter-spacing: .01em; color: #333; }
+#life-pattern-source { color: #888; font-size: 10px; text-underline-offset: 3px; }
+.life-hint { color: #888; font-size: 11px; margin-top: 4px; }
+.life-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
+.life-controls button, .life-controls a { padding: 0; border: 0; background: none; color: #666; font: inherit; font-size: 11px; cursor: pointer; text-decoration: none; }
+.life-controls button:first-child { color: #0066ff; }
+.life-controls button:hover, .life-controls a:hover { color: #0066ff; text-decoration: underline; text-underline-offset: 3px; }
+.life-controls :focus-visible { outline: 2px solid #0066ff; outline-offset: 4px; }
+#universe-stats { display: block; margin-top: 8px; color: #a0a0a0; font: 10px ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.glider-glyph { display: block; position: relative; width: 28px; height: 28px; flex-shrink: 0; color: #0066ff; margin-top: 3px; }
+.glider-glyph i { position: absolute; width: 7px; height: 7px; background: currentColor; }
+.glider-glyph i:nth-child(1) { left: 9px; top: 0; }
+.glider-glyph i:nth-child(2) { left: 18px; top: 9px; }
+.glider-glyph i:nth-child(3) { left: 0; top: 18px; }
+.glider-glyph i:nth-child(4) { left: 9px; top: 18px; }
+.glider-glyph i:nth-child(5) { left: 18px; top: 18px; }
 
-#automata-canvas.active {
-    opacity: 1;
+/* A compact title-only list; the archive retains descriptions and dates. */
+.writing-title-list { list-style: none; display: grid; gap: 12px; font-size: 13px; }
+.writing-title-list a, .blog-title a { color: inherit; text-decoration: none; }
+.writing-title-list a { font-size: inherit; text-decoration: underline; text-decoration-color: #d5d5d5; text-underline-offset: 4px; }
+.writing-title-list a:hover, .blog-title a:hover { color: #0066ff; }
+.writing-title-list a:focus-visible, .blog-title a:focus-visible { outline: 2px solid #0066ff; outline-offset: 6px; }
+#blogs { padding: 20px 80px; }
+#blogs .section-title { margin-bottom: 16px; }
+#photography { padding-top: 28px; padding-bottom: 28px; }
+#photography .photo-collections { margin-bottom: 12px; }
+.writings-page { min-height: calc(100vh - 110px); padding-top: 130px; }
+.site-footer { position: relative; z-index: 2; display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; padding: 24px 24px 40px; border-top: 1px solid #e9e9e9; background: #fff; font-size: 13px; }
+.site-footer span { color: #888; }
+.site-footer a { color: #333; text-decoration: none; }
+.site-footer a:hover { color: #0066ff; }
+@media (max-width: 768px) {
+    #blogs { padding-left: 40px; padding-right: 40px; }
+    .writing-title-list { font-size: 12px; }
 }
-
-/* Hint Text at top */
-.hint-text {
-    position: fixed;
-    top: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: #0066ff;
-    font-size: 28px;
-    font-weight: 600;
-    z-index: 10;
-    pointer-events: none;
-    animation: pulse 1.5s ease-in-out infinite;
-    text-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: translateX(-50%) scale(1);
-    }
-    50% {
-        opacity: 0.8;
-        transform: translateX(-50%) scale(1.1);
-    }
-}
-
-.hint-text.hidden {
-    display: none;
-}
-
-/* What is this link at bottom */
-.what-is-this {
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
-    pointer-events: auto;
-}
-
-.what-is-this.hidden {
-    display: none;
-}
-
-.what-is-this a {
-    color: #0066ff;
-    text-decoration: underline;
-    font-size: 20px;
-    font-weight: 500;
-    transition: opacity 0.3s ease;
-}
-
-.what-is-this a:hover {
-    opacity: 0.7;
+@media (max-width: 480px) {
+    #blogs { padding-left: 20px; padding-right: 20px; }
+    .writing-title-list { font-size: 11px; }
 }
 
 /* Contact Sidebar */
